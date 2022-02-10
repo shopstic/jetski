@@ -341,6 +341,8 @@ export async function multipassPostStart(
 
   const ip = ipv4[0];
 
+  await multipassResolveClusterLocalDns({ ip, instance });
+
   if (instance.nodeLabels) {
     const nodeLabels = Object.entries(instance.nodeLabels).map(([key, value]) =>
       `${key}=${value}`
@@ -355,7 +357,6 @@ export async function multipassPostStart(
     });
   }
 
-  await multipassResolveClusterLocalDns({ ip, instance });
   await multipassRoute({ ip, instance });
 
   return ip;
