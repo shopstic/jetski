@@ -429,16 +429,12 @@ export async function multipassUnroute(
   if (isWindows) {
     log("Removing routes");
     for (const cidr of [clusterCidr, serviceCidr]) {
+      const cmd = [
+        "powershell.exe",
+        `'Remove-NetRoute -DestinationPrefix ${cidr} -Confirm:$false -erroraction "silentlycontinue"'`,
+      ];
       await inheritExec({
-        cmd: [
-          "powershell.exe",
-          "'Remove-NetRoute'",
-          "'-DestinationPrefix'",
-          cidr,
-          "'-Confirm:$false'",
-          "'-erroraction'",
-          `'"silentlycontinue"'`,
-        ],
+        cmd,
         stdin: { inherit: true },
       });
     }
@@ -447,7 +443,7 @@ export async function multipassUnroute(
     await inheritExec({
       cmd: [
         "powershell.exe",
-        `'Foreach($x in (Get-DnsClientNrptRule | Where-Object {$_.Namespace -eq ".svc.${clusterDomain}"} | foreach {$_.Name})){ Remove-DnsClientNrptRule -Name "$x" -Force }'`,
+        `Foreach($x in (Get-DnsClientNrptRule | Where-Object {$_.Namespace -eq ".svc.${clusterDomain}"} | foreach {$_.Name})){ Remove-DnsClientNrptRule -Name "$x" -Force }`,
       ],
       stdin: { inherit: true },
     });
@@ -489,13 +485,7 @@ export async function multipassRoute(
       await inheritExec({
         cmd: [
           "powershell.exe",
-          "'New-NetRoute'",
-          "'-DestinationPrefix'",
-          cidr,
-          "'-InterfaceAlias'",
-          '"vEthernet (Default Switch)"',
-          "'-NextHop'",
-          ip,
+          `'New-NetRoute -DestinationPrefix ${cidr} -InterfaceAlias "vEthernet (Default Switch)" -NextHop ${ip}'`,
         ],
         stdin: { inherit: true },
       });
