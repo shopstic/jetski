@@ -1,0 +1,34 @@
+name: Build
+
+on: [push]
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: Build
+    runs-on: [self-hosted, nix]
+    strategy:
+      matrix:
+        arch:
+          - x86_64-linux
+          - x86_64-darwin
+          - aarch64-linux
+          - aarch64-darwin
+    steps:
+      - uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
+
+      - name: Check
+        run: nix develop -v -c ./cli.sh code_quality
+
+      - name: Build
+        run: nix build -L -v --no-link '.#defaultPackage.${{ matrix.arch }}'
+
+      - name: Cache
+        env: 
+          NIX_OUTPUT: .#defaultPackage.${{ matrix.arch }}
+        run: |
+          nix store sign "${NIX_OUTPUT}" -v -r -k ~/.secrets/nix-cache-private-key
+          nix copy -v "${NIX_OUTPUT}" --to s3://nixed/cache
