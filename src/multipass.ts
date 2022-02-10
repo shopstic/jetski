@@ -42,19 +42,11 @@ export async function multipass(
     stderr?: StdOutputBehavior;
   },
 ) {
-  const cmd = [
-    await multipassBin(),
-    command,
-    ...args,
-  ];
+  const cmd = [await multipassBin(), command, ...args];
 
   log("Executing", cyan(cmd.join(" ")));
 
-  await inheritExec({
-    cmd,
-    stdout,
-    stderr,
-  });
+  await inheritExec({ cmd, stdout, stderr });
 }
 
 export async function multipassCapture(
@@ -66,11 +58,7 @@ export async function multipassCapture(
   },
 ): Promise<string> {
   return (await captureExec({
-    cmd: [
-      await multipassBin(),
-      command,
-      ...args,
-    ],
+    cmd: [await multipassBin(), command, ...args],
     stderr,
     abortSignal,
   })).out;
@@ -93,13 +81,7 @@ export async function multipassInfo(
       return await multipassCapture({
         command: "info",
         args: [name, "--format", "json"],
-        stderr: ignoreStderr
-          ? {
-            ignore: true,
-          }
-          : {
-            inherit: true,
-          },
+        stderr: ignoreStderr ? { ignore: true } : { inherit: true },
         abortSignal: abortController.signal,
       });
     } catch (e) {
@@ -120,9 +102,7 @@ export async function multipassInfo(
     try {
       return JSON.parse(maybeJson);
     } catch (e) {
-      throw new Error(
-        `Failed parsing 'multipass info ...' output to JSON due to: ${e.toString()}. Got: ${maybeJson}`,
-      );
+      throw new Error(`Failed parsing 'multipass info ...' output to JSON due to: ${e.toString()}. Got: ${maybeJson}`);
     }
   })();
 
@@ -131,10 +111,7 @@ export async function multipassInfo(
   if (!result.isSuccess) {
     throw new Error(
       `Unexpected output from 'multipass info ...'. Errors:\n${
-        result.errorsToString({
-          separator: "\n",
-          dataVar: "  -",
-        })
+        result.errorsToString({ separator: "\n", dataVar: "  -" })
       }`,
     );
   }
@@ -145,14 +122,7 @@ export async function multipassInfo(
 function multipassCreateSshCommand(
   { sshDirectoryPath, ip }: { sshDirectoryPath: string; ip: string },
 ) {
-  return [
-    "ssh",
-    "-o",
-    "StrictHostKeyChecking=no",
-    "-i",
-    `${sshDirectoryPath}/id_ed25519`,
-    `ubuntu@${ip}`,
-  ];
+  return ["ssh", "-o", "StrictHostKeyChecking=no", "-i", `${sshDirectoryPath}/id_ed25519`, `ubuntu@${ip}`];
 }
 
 export async function multipassSshInteractive({ cmd, sshDirectoryPath, ip }: {
@@ -194,12 +164,8 @@ export async function multipassInheritSsh(
       ...cmd,
     ],
     abortSignal: abortSignal,
-    stdout: {
-      read: printOutLines((line) => `${tag} ${line}`),
-    },
-    stderr: {
-      read: printErrLines((line) => `${tag} ${line}`),
-    },
+    stdout: { read: printOutLines((line) => `${tag} ${line}`) },
+    stderr: { read: printErrLines((line) => `${tag} ${line}`) },
     stdin,
   });
 }
@@ -219,9 +185,7 @@ export async function multipassCaptureSsh(
       ...cmd,
     ],
     abortSignal: abortSignal,
-    stderr: {
-      capture: true,
-    },
+    stderr: { capture: true },
     stdin,
   });
 }
@@ -268,10 +232,7 @@ export async function multipassWaitForState(
   while (!abortSignal.aborted) {
     const ready = await (async () => {
       try {
-        const { state } = await multipassInfo({
-          name: instance.name,
-          ignoreStderr: true,
-        });
+        const { state } = await multipassInfo({ name: instance.name, ignoreStderr: true });
 
         return isReady(state);
       } catch {
@@ -298,17 +259,10 @@ export async function multipassTailCloudInitOutputLog(
   log();
   log(tag, "Waiting for instance's 'Running' state");
 
-  await multipassWaitForState({
-    isReady: (state) => state === InstanceState.Running,
-    instance,
-    abortSignal,
-  });
+  await multipassWaitForState({ isReady: (state) => state === InstanceState.Running, instance, abortSignal });
 
   log(tag, "Obtaining instance's IP");
-  const { ipv4 } = await multipassInfo({
-    name: instance.name,
-    ignoreStderr: true,
-  });
+  const { ipv4 } = await multipassInfo({ name: instance.name, ignoreStderr: true });
 
   const ip = ipv4[0];
 
@@ -344,9 +298,7 @@ export async function multipassPostStart(
   await multipassResolveClusterLocalDns({ ip, instance });
 
   if (instance.nodeLabels) {
-    const nodeLabels = Object.entries(instance.nodeLabels).map(([key, value]) =>
-      `${key}=${value}`
-    );
+    const nodeLabels = Object.entries(instance.nodeLabels).map(([key, value]) => `${key}=${value}`);
 
     log("Adding labels to node:", ...nodeLabels.map((l) => cyan(l)));
     await multipassInheritSsh({
@@ -379,12 +331,7 @@ export async function multipassResolveClusterLocalDns(
   try {
     while (!abortSignal?.aborted) {
       try {
-        await multipassCaptureSsh({
-          cmd: ["ip", "link", "show", "cni0"],
-          sshDirectoryPath,
-          ip,
-          abortSignal,
-        });
+        await multipassCaptureSsh({ cmd: ["ip", "link", "show", "cni0"], sshDirectoryPath, ip, abortSignal });
         break;
       } catch (e) {
         if (
@@ -516,12 +463,7 @@ export async function multipassRoute(
     await inheritExec({
       cmd: ["sudo", "tee", `/etc/resolver/svc.${clusterDomain}`],
       stdin: {
-        pipe: [
-          `domain svc.${clusterDomain}`,
-          `nameserver ${clusterDnsIp}`,
-          "search_order 1",
-          "",
-        ].join("\n"),
+        pipe: [`domain svc.${clusterDomain}`, `nameserver ${clusterDnsIp}`, "search_order 1", ""].join("\n"),
       },
     });
   }

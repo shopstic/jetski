@@ -1,9 +1,5 @@
 import { createCliAction, ExitCode, resolvePath, Type } from "../deps.ts";
-import {
-  multipassInfo,
-  multipassPostStart,
-  multipassStart,
-} from "../multipass.ts";
+import { multipassInfo, multipassPostStart, multipassStart } from "../multipass.ts";
 import { InstanceConfigPathSchema, InstanceState } from "../types.ts";
 import { loadInstanceConfig, ok } from "../utils.ts";
 
@@ -18,9 +14,7 @@ export default createCliAction(
     const { state } = await multipassInfo({ name });
 
     if (state !== InstanceState.Stopped) {
-      throw new Error(
-        `Instance '${name}' is not in 'Stopped' state. Current state is '${state}'`,
-      );
+      throw new Error(`Instance '${name}' is not in 'Stopped' state. Current state is '${state}'`);
     }
 
     await multipassStart(instance);

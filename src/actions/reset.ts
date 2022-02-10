@@ -1,10 +1,4 @@
-import {
-  createCliAction,
-  ExitCode,
-  resolvePath,
-  Type,
-  yellow,
-} from "../deps.ts";
+import { createCliAction, ExitCode, resolvePath, Type, yellow } from "../deps.ts";
 import { InstanceConfigPathSchema } from "../types.ts";
 import { loadInstanceConfig } from "../utils.ts";
 import { createInstance } from "./create.ts";

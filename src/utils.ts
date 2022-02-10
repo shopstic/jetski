@@ -1,20 +1,5 @@
-import {
-  dirname,
-  green,
-  printErrLines,
-  printOutLines,
-  resolvePath,
-  validate,
-  writeAllSync,
-} from "./deps.ts";
-import {
-  fsExists,
-  gray,
-  inheritExec,
-  joinPath,
-  red,
-  stringifyYaml,
-} from "./deps.ts";
+import { dirname, green, printErrLines, printOutLines, resolvePath, validate, writeAllSync } from "./deps.ts";
+import { fsExists, gray, inheritExec, joinPath, red, stringifyYaml } from "./deps.ts";
 import { InstanceConfig, InstanceConfigSchema } from "./types.ts";
 
 export async function loadInstanceConfig(
@@ -83,23 +68,9 @@ export async function generateSshKeyPairIfNotExists(
     );
     const tag = gray(`[$ ssh-keygen ...]`);
     await inheritExec({
-      cmd: [
-        "ssh-keygen",
-        "-t",
-        "ed25519",
-        "-C",
-        name,
-        "-f",
-        privateKeyPath,
-        "-P",
-        "",
-      ],
-      stderr: {
-        read: printErrLines((line) => `${tag} ${line}`),
-      },
-      stdout: {
-        read: printOutLines((line) => `${tag} ${line}`),
-      },
+      cmd: ["ssh-keygen", "-t", "ed25519", "-C", name, "-f", privateKeyPath, "-P", ""],
+      stderr: { read: printErrLines((line) => `${tag} ${line}`) },
+      stdout: { read: printOutLines((line) => `${tag} ${line}`) },
     });
   } else {
     log(
@@ -112,13 +83,7 @@ export async function generateSshKeyPairIfNotExists(
 export function createCloudInitConfig(
   {
     sshPublicKey,
-    instance: {
-      clusterCidr,
-      serviceCidr,
-      clusterDnsIp,
-      clusterDomain,
-      k3sVersion,
-    },
+    instance: { clusterCidr, serviceCidr, clusterDnsIp, clusterDomain, k3sVersion },
   }: {
     sshPublicKey: string;
     instance: InstanceConfig;

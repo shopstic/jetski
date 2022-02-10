@@ -1,4 +1,4 @@
-import { bold, CliProgram, red } from "./deps.ts";
+import { bold, CliProgram, NonZeroExitError, red } from "./deps.ts";
 import version from "./actions/version.ts";
 import ssh from "./actions/ssh.ts";
 import create from "./actions/create.ts";
@@ -19,7 +19,11 @@ const program = new CliProgram()
 try {
   await program.run(Deno.args);
 } catch (e) {
-  if (Deno.env.get("JETSKI_ENABLE_STACKTRACE") !== "0") {
+  if (e instanceof NonZeroExitError) {
+    console.error(bold(red("[Error]")), e.message);
+    console.error(e.output);
+    Deno.exit(1);
+  } else if (Deno.env.get("JETSKI_ENABLE_STACKTRACE") !== "0") {
     throw e;
   } else {
     console.error(bold(red("[Error]")), e.message);

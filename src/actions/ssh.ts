@@ -16,9 +16,7 @@ export default createCliAction(
     const { state, ipv4 } = await multipassInfo({ name });
 
     if (state !== InstanceState.Running) {
-      throw new Error(
-        `Instance '${name}' is not in 'Running' state. Current state is '${state}'`,
-      );
+      throw new Error(`Instance '${name}' is not in 'Running' state. Current state is '${state}'`);
     }
 
     const exitCode = await multipassSshInteractive({

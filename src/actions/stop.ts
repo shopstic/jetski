@@ -1,10 +1,5 @@
 import { createCliAction, ExitCode, resolvePath, Type } from "../deps.ts";
-import {
-  multipassInfo,
-  multipassK3sKillAll,
-  multipassStop,
-  multipassUnroute,
-} from "../multipass.ts";
+import { multipassInfo, multipassK3sKillAll, multipassStop, multipassUnroute } from "../multipass.ts";
 import { InstanceConfigPathSchema, InstanceState } from "../types.ts";
 import { loadInstanceConfig, ok } from "../utils.ts";
 
@@ -20,9 +15,7 @@ export default createCliAction(
     const { state, ipv4 } = await multipassInfo(instance);
 
     if (state !== InstanceState.Running) {
-      throw new Error(
-        `Instance '${name}' is not in 'Running' state. Current state is '${state}'`,
-      );
+      throw new Error(`Instance '${name}' is not in 'Running' state. Current state is '${state}'`);
     }
 
     const ip = ipv4[0];

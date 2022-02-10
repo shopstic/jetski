@@ -45,6 +45,5 @@ export type InstanceConfig = Static<typeof InstanceConfigSchema>;
 
 export const InstanceConfigPathSchema = Type.String({
   minLength: 1,
-  description:
-    "Path to the instance config file. It should be an ES module with a default export.",
+  description: "Path to the instance config file. It should be an ES module with a default export.",
 });
