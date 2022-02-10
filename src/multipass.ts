@@ -389,7 +389,7 @@ export async function multipassResolveClusterLocalDns(
       } catch (e) {
         if (
           e instanceof NonZeroExitError &&
-          e.output?.err.trim() === 'Device "cni0" does not exist.'
+          e.output?.err.includes('Device "cni0" does not exist.')
         ) {
           print(".");
           await delay(1000);
