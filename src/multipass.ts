@@ -139,7 +139,7 @@ export async function multipassInfo(
     );
   }
 
-  return result.value.info.local;
+  return result.value.info[name];
 }
 
 function multipassCreateSshCommand(

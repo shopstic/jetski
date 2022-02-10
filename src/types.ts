@@ -32,12 +32,13 @@ export enum InstanceState {
 }
 
 export const MultipassInfo = Type.PartialObject({
-  info: Type.Object({
-    local: Type.PartialObject({
+  info: Type.Record(
+    Type.String(),
+    Type.PartialObject({
       ipv4: Type.Array(Ipv4),
       state: Type.Enum(InstanceState),
     }),
-  }),
+  ),
 });
 
 export type InstanceConfig = Static<typeof InstanceConfigSchema>;
