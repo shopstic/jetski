@@ -41,7 +41,7 @@
           jetski = pkgs.callPackage hotPot.lib.denoAppBuild
             {
               inherit deno;
-              denoRunFlags = "--unstable -A";
+              denoRunFlags = "-A";
               name = "jetski";
               src = builtins.path
                 {

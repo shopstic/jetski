@@ -1,8 +1,8 @@
 import {
-  AbortedError,
   captureExec,
   cyan,
   delay,
+  ExecAbortedError,
   gray,
   inheritExec,
   memoizePromise,
@@ -85,7 +85,7 @@ export async function multipassInfo(
         abortSignal: abortController.signal,
       });
     } catch (e) {
-      if (e instanceof AbortedError) {
+      if (e instanceof ExecAbortedError) {
         throw new Error(
           `Timed out waiting for 'multipass info ...' command to respond after ${timeoutMs}ms. Perhaps the multipassd daemon hung?`,
         );
