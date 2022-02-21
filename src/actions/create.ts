@@ -1,4 +1,3 @@
-import { writeAll } from "https://deno.land/std@0.122.0/streams/conversion.ts";
 import {
   captureExec,
   createCliAction,
@@ -12,6 +11,7 @@ import {
   resolvePath,
   stringifyYaml,
   Type,
+  writeAll,
 } from "../deps.ts";
 import {
   multipass,
