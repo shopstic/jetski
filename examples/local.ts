@@ -1,3 +1,5 @@
+import { InstanceConfig } from "../src/types.ts";
+
 export default {
   name: "local",
   image: "focal",
@@ -9,9 +11,13 @@ export default {
   serviceCidr: "10.254.255.0/24",
   clusterDnsIp: "10.254.255.10",
   clusterDomain: "jetski.local",
+  disableComponents: {
+    traefik: true,
+    metricsServer: true
+  },
   nodeLabels: {
     "com.jetski/foo": "bar",
     "com.jetski/baz": "boo",
   },
   sshDirectoryPath: "./local/.ssh",
-};
+} as InstanceConfig;

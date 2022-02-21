@@ -83,12 +83,20 @@ export async function generateSshKeyPairIfNotExists(
 export function createCloudInitConfig(
   {
     sshPublicKey,
-    instance: { clusterCidr, serviceCidr, clusterDnsIp, clusterDomain, k3sVersion },
+    instance: { clusterCidr, serviceCidr, clusterDnsIp, clusterDomain, k3sVersion, disableComponents },
   }: {
     sshPublicKey: string;
     instance: InstanceConfig;
   },
 ) {
+  const k3sConfigDisable = [
+    ...(disableComponents?.coredns ? ["coredns"] : []),
+    ...(disableComponents?.localStorage ? ["local-storage"] : []),
+    ...(disableComponents?.metricsServer ? ["metrics-server"] : []),
+    ...(disableComponents?.servicelb ? ["servicelb"] : []),
+    ...(disableComponents?.traefik ? ["traefik"] : []),
+  ];
+
   return {
     users: [
       "default",
@@ -113,6 +121,7 @@ export function createCloudInitConfig(
           "service-cidr": serviceCidr,
           "cluster-dns": clusterDnsIp,
           "cluster-domain": clusterDomain,
+          "disable": k3sConfigDisable,
         }),
       },
       {

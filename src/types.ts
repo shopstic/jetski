@@ -20,6 +20,13 @@ export const InstanceConfigSchema = Type.Object({
   serviceCidr: Cidr,
   clusterDnsIp: Ipv4,
   clusterDomain: Type.String({ format: "hostname", minLength: 1 }),
+  disableComponents: Type.Optional(Type.Object({
+    coredns: Type.Optional(Type.Boolean()),
+    servicelb: Type.Optional(Type.Boolean()),
+    traefik: Type.Optional(Type.Boolean()),
+    localStorage: Type.Optional(Type.Boolean()),
+    metricsServer: Type.Optional(Type.Boolean()),
+  })),
   nodeLabels: Type.Optional(Type.Record(Type.String(), Type.String())),
   sshDirectoryPath: NonEmptyString,
 });
