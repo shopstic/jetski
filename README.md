@@ -4,6 +4,8 @@
 
 It embraces Infrastructure as Code practice and allows you to manage multiple local Kubernetes instances via their own type-safe config files. On top of that, it manages local routes and DNS rules such that you can access Kubernetes `Services` and/or `Pods` directly via their respective [DNS names](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#services), `Service IPs` or `ClusterIPs` from all your local tools. It's "magical", and once you have tried it, there's no going back.
 
+`jetski` has first-class support for all common Operating Systems, including macOS (both Intel and Apple Silicon architectures), Windows via WSL 2 and Linux (both `amd64` and `arm64`).
+
 ## License
 
 [Apache 2.0 License](./LICENSE)
