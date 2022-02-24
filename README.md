@@ -1,8 +1,12 @@
 # Jetski - the nimble local Kubernetes development environment
 
-`jetski` is a CLI tool that build on top of [multipass](https://github.com/canonical/multipass) and [k3s](https://github.com/k3s-io/k3s) to create the an ideal local Kubernetes development experience. 
+`jetski` is a CLI tool built on top of [multipass](https://github.com/canonical/multipass) and [k3s](https://github.com/k3s-io/k3s) to create an ideal local Kubernetes development experience. 
 
 It embraces Infrastructure as Code practice and allows you to manage multiple local Kubernetes instances via their own type-safe config files. On top of that, it manages local routes and DNS rules such that you can access Kubernetes `Services` and/or `Pods` directly via their respective [DNS names](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#services), `Service IPs` or `ClusterIPs` from all your local tools. It's "magical", and once you have tried it, there's no going back.
+
+## License
+
+[Apache 2.0 License](./LICENSE)
 
 ## Getting started
 
@@ -54,10 +58,6 @@ const config: InstanceConfig = {
   serviceCidr: "10.254.255.0/24",
   clusterDnsIp: "10.254.255.10",
   clusterDomain: "jetski.local",
-  disableComponents: {
-    traefik: true,
-    metricsServer: true
-  },
   nodeLabels: {
     "com.jetski/foo": "bar",
     "com.jetski/baz": "boo",
