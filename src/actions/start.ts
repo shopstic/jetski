@@ -2,6 +2,7 @@ import { createCliAction, ExitCode, resolvePath, Type } from "../deps.ts";
 import { multipassInfo, multipassPostStart, multipassStart } from "../multipass.ts";
 import { InstanceConfigPathSchema, InstanceState } from "../types.ts";
 import { loadInstanceConfig, ok } from "../utils.ts";
+import { updateKubeconfig } from "./create.ts";
 
 export default createCliAction(
   Type.Object({
@@ -18,7 +19,8 @@ export default createCliAction(
     }
 
     await multipassStart(instance);
-    await multipassPostStart(instance);
+    const ip = await multipassPostStart(instance);
+    await updateKubeconfig({ ip, instance });
 
     ok(`Instance '${name}' has been started`);
 
