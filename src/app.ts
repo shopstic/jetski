@@ -6,6 +6,7 @@ import stop from "./actions/stop.ts";
 import start from "./actions/start.ts";
 import destroy from "./actions/destroy.ts";
 import reset from "./actions/reset.ts";
+import refresh from "./actions/refresh.ts";
 
 const program = new CliProgram()
   .addAction("version", version)
@@ -14,7 +15,8 @@ const program = new CliProgram()
   .addAction("stop", stop)
   .addAction("destroy", destroy)
   .addAction("start", start)
-  .addAction("reset", reset);
+  .addAction("reset", reset)
+  .addAction("refresh", refresh);
 
 try {
   await program.run(Deno.args);
