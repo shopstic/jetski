@@ -14,8 +14,10 @@ export default createCliAction(
     const { name } = instance;
     const { state } = await multipassInfo({ name });
 
-    if (state !== InstanceState.Stopped) {
-      throw new Error(`Instance '${name}' is not in 'Stopped' state. Current state is '${state}'`);
+    if (state !== InstanceState.Stopped && state !== InstanceState.Suspended) {
+      throw new Error(
+        `Instance '${name}' is not in either 'Suspended' or 'Stopped' state. Current state is '${state}'`,
+      );
     }
 
     await multipassStart(instance);

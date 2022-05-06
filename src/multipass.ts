@@ -204,6 +204,10 @@ export async function multipassK3sKillAll(
   });
 }
 
+export async function multipassSuspend({ name }: { name: string }) {
+  await multipass({ command: "suspend", args: [name], stdout: { inherit: true }, stderr: { inherit: true } });
+}
+
 export async function multipassStop({ name }: { name: string }) {
   await multipass({ command: "stop", args: [name], stdout: { ignore: true } });
 }

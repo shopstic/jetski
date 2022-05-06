@@ -35,6 +35,7 @@ export enum InstanceState {
   Starting = "Starting",
   Running = "Running",
   Stopped = "Stopped",
+  Suspended = "Suspended",
   Unknown = "Unknown",
 }
 
