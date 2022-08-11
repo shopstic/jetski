@@ -19,6 +19,13 @@ jobs:
     steps:
       - uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579
 
+      - name: Debug
+        run: |
+          pwd
+          whoami
+          env
+          ls -la .
+
       - name: Check
         run: nix develop -v -c ./cli.sh code_quality
 
