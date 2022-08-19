@@ -15,8 +15,8 @@ jobs:
         arch:
           - nix: x86_64-linux
             runner: amd64-linux
-          - nix: arm64-linux
-            runner: aarch64-linux
+          - nix: aarch64-linux
+            runner: arm64-linux
           - nix: aarch64-darwin
             runner: arm64-linux
     steps:
