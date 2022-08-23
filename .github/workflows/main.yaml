@@ -9,7 +9,7 @@ defaults:
 jobs:
   build:
     name: Build
-    runs-on: [self-hosted, nix, "${{ matrix.arch.runner }}", small]
+    runs-on: [self-hosted, nix, general, "${{ matrix.arch.runner }}", small]
     strategy:
       matrix:
         arch:
