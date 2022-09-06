@@ -23,7 +23,7 @@ update_lock() {
 
 run() {
   export JETSKI_ENABLE_STACKTRACE=${JETSKI_ENABLE_STACKTRACE:-"0"}
-  deno run -A ./src/app.ts "$@"
+  deno run -A --check ./src/app.ts "$@"
 }
 
 "$@"
