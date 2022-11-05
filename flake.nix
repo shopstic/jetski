@@ -63,7 +63,7 @@
             };
         in
         rec {
-          defaultPackage = pkgs.runCommandNoCC "jetski-wrapped"
+          defaultPackage = pkgs.runCommandLocal "jetski-wrapped"
             {
               buildInputs = [ pkgs.makeWrapper ];
             }
