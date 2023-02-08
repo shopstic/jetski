@@ -83,7 +83,15 @@ export async function generateSshKeyPairIfNotExists(
 export function createCloudInitConfig(
   {
     sshPublicKey,
-    instance: { clusterCidr, serviceCidr, clusterDnsIp, clusterDomain, k3sVersion, disableComponents },
+    instance: {
+      clusterCidr,
+      serviceCidr,
+      clusterDnsIp,
+      clusterDomain,
+      k3sVersion,
+      disableComponents,
+      datastoreEndpoint,
+    },
   }: {
     sshPublicKey: string;
     instance: InstanceConfig;
@@ -122,6 +130,11 @@ export function createCloudInitConfig(
           "cluster-dns": clusterDnsIp,
           "cluster-domain": clusterDomain,
           "disable": k3sConfigDisable,
+          ...(datastoreEndpoint
+            ? {
+              "datastore-endpoint": datastoreEndpoint,
+            }
+            : {}),
         }),
       },
       {

@@ -28,6 +28,8 @@
               "[typescript]" = {
                 "editor.defaultFormatter" = "denoland.vscode-deno";
                 "editor.formatOnSave" = true;
+                "editor.suggest.insertMode" = "replace";
+                "editor.inlayHints.enabled" = "offUnlessPressed";
               };
               "yaml.schemaStore.enable" = true;
               "yaml.schemas" = {

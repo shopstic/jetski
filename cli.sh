@@ -13,12 +13,13 @@ auto_fmt() {
 }
 
 update_cache() {
-  deno cache --lock=lock.json ./src/deps.ts ./src/app.ts
+  deno cache --lock=deno.lock ./src/deps.ts ./src/app.ts
 }
 
 update_lock() {
+  rm -f deno.lock
   deno cache --reload ./src/deps.ts ./src/app.ts
-  deno cache ./src/deps.ts ./src/app.ts --lock ./lock.json --lock-write
+  deno cache ./src/deps.ts ./src/app.ts --lock ./deno.lock --lock-write
 }
 
 run() {

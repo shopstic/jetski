@@ -16,6 +16,7 @@ export const InstanceConfigSchema = Type.Object({
   memoryGiBs: Type.Number(),
   diskGiBs: Type.Number(),
   k3sVersion: NonEmptyString,
+  datastoreEndpoint: Type.Optional(NonEmptyString),
   clusterCidr: Cidr,
   serviceCidr: Cidr,
   clusterDnsIp: Ipv4,

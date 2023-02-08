@@ -122,7 +122,16 @@ export async function multipassInfo(
 function multipassCreateSshCommand(
   { sshDirectoryPath, ip }: { sshDirectoryPath: string; ip: string },
 ) {
-  return ["ssh", "-o", "StrictHostKeyChecking=no", "-i", `${sshDirectoryPath}/id_ed25519`, `ubuntu@${ip}`];
+  return [
+    "ssh",
+    "-o",
+    "UserKnownHostsFile=/dev/null",
+    "-o",
+    "StrictHostKeyChecking=no",
+    "-i",
+    `${sshDirectoryPath}/id_ed25519`,
+    `ubuntu@${ip}`,
+  ];
 }
 
 export async function multipassSshInteractive({ cmd, sshDirectoryPath, ip }: {

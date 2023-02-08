@@ -1,12 +1,12 @@
 import { InstanceConfig } from "../src/types.ts";
 
 export default {
-  name: "local",
-  image: "focal",
+  name: "jetski-example",
+  image: "lts",
   cpus: 1,
-  memoryGiBs: 1,
-  diskGiBs: 4,
-  k3sVersion: "v1.21.9+k3s1",
+  memoryGiBs: 2,
+  diskGiBs: 10,
+  k3sVersion: "v1.23.16+k3s1",
   clusterCidr: "10.254.254.0/24",
   serviceCidr: "10.254.255.0/24",
   clusterDnsIp: "10.254.255.10",
@@ -20,4 +20,5 @@ export default {
     "com.jetski/baz": "boo",
   },
   sshDirectoryPath: "./local/.ssh",
+  // datastoreEndpoint: "http://192.168.2.22:2379"
 } as InstanceConfig;
