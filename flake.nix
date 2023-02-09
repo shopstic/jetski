@@ -51,7 +51,7 @@
                   name = "jetski-src";
                   filter = with pkgs.lib; (path: /* type */_:
                     hasInfix "/src" path ||
-                    hasSuffix "/lock.json" path
+                    hasSuffix "/deno.lock" path
                   );
                 };
               appSrcPath = "./src/app.ts";
