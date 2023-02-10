@@ -91,6 +91,7 @@ export function createCloudInitConfig(
       k3sVersion,
       disableComponents,
       datastoreEndpoint,
+      kubelet,
     },
   }: {
     sshPublicKey: string;
@@ -150,9 +151,22 @@ export function createCloudInitConfig(
           },
         }),
       },
+      ...(kubelet
+        ? [{
+          owner: "root:root",
+          path: "/etc/rancher/k3s/kubelet-config.yaml",
+          content: stringifyYaml({
+            apiVersion: "kubelet.config.k8s.io/v1beta1",
+            kind: "KubeletConfiguration",
+            maxPods: kubelet.maxPods,
+          }),
+        }]
+        : []),
     ],
     runcmd: [
-      `curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=${k3sVersion} sh -`,
+      `curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=${k3sVersion} ${
+        kubelet ? 'INSTALL_K3S_EXEC="--kubelet-arg=config=/etc/rancher/k3s/kubelet-config.yaml"' : ""
+      } sh -`,
     ],
     package_update: false,
   };

@@ -21,4 +21,7 @@ export default {
   },
   sshDirectoryPath: "./local/.ssh",
   // datastoreEndpoint: "http://192.168.2.22:2379"
+  kubelet: {
+    maxPods: 500
+  }
 } as InstanceConfig;

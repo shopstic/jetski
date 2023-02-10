@@ -21,6 +21,9 @@ export const InstanceConfigSchema = Type.Object({
   serviceCidr: Cidr,
   clusterDnsIp: Ipv4,
   clusterDomain: Type.String({ format: "hostname", minLength: 1 }),
+  kubelet: Type.Optional(Type.Object({
+    maxPods: Type.Number(),
+  })),
   disableComponents: Type.Optional(Type.Object({
     coredns: Type.Optional(Type.Boolean()),
     servicelb: Type.Optional(Type.Boolean()),
