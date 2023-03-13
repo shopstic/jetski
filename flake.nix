@@ -43,7 +43,7 @@
           jetski = pkgs.callPackage hotPot.lib.denoAppBuild
             {
               inherit deno;
-              denoRunFlags = "-A";
+              denoRunFlags = "-A --no-lock";
               name = "jetski";
               src = builtins.path
                 {
