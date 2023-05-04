@@ -5,7 +5,6 @@ import {
   ExitCode,
   fsExists,
   inheritExec,
-  iterateReader,
   joinPath,
   parseYaml,
   resolvePath,
@@ -125,12 +124,16 @@ export async function createInstance(instance: InstanceConfig) {
         cloudInitFilePath,
       ],
       stdout: {
-        async read(reader: Deno.Reader) {
-          for await (const chunk of iterateReader(reader)) {
-            if (multipassLaunchStdoutAbort.signal.aborted) {
-              continue;
+        async read(readable: ReadableStream<Uint8Array>) {
+          try {
+            for await (const chunk of readable) {
+              if (multipassLaunchStdoutAbort.signal.aborted) {
+                continue;
+              }
+              await writeAll(Deno.stdout, chunk);
             }
-            await writeAll(Deno.stdout, chunk);
+          } finally {
+            await readable.cancel();
           }
         },
       },
