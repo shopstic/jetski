@@ -139,22 +139,17 @@ export async function multipassSshInteractive({ cmd, sshDirectoryPath, ip }: {
   sshDirectoryPath: string;
   cmd: string[];
 }): Promise<number> {
-  const child = Deno.run({
-    cmd: [
-      ...multipassCreateSshCommand({ sshDirectoryPath, ip }),
-      ...cmd,
-    ],
+  const execCmd = [
+    ...multipassCreateSshCommand({ sshDirectoryPath, ip }),
+    ...cmd,
+  ];
+
+  return (await new Deno.Command(execCmd[0], {
+    args: execCmd.slice(1),
     stdin: "inherit",
     stdout: "inherit",
     stderr: "inherit",
-  });
-
-  try {
-    const { code } = await child.status();
-    return code;
-  } finally {
-    child.close();
-  }
+  }).output()).code;
 }
 
 export async function multipassInheritSsh(
