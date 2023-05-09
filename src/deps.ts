@@ -1,8 +1,8 @@
-export * from "https://deno.land/x/utils@2.12.0/cli_utils.ts";
-export * from "https://deno.land/x/utils@2.12.0/exec_utils.ts";
-export * from "https://deno.land/x/utils@2.12.0/deps/typebox.ts";
-export * from "https://deno.land/x/utils@2.12.0/validation_utils.ts";
-export type { ValidationResult } from "https://deno.land/x/utils@2.12.0/validation_utils.ts";
+export * from "https://deno.land/x/utils@2.12.1/cli_utils.ts";
+export * from "https://deno.land/x/utils@2.12.1/exec_utils.ts";
+export * from "https://deno.land/x/utils@2.12.1/deps/typebox.ts";
+export * from "https://deno.land/x/utils@2.12.1/validation_utils.ts";
+export type { ValidationResult } from "https://deno.land/x/utils@2.12.1/validation_utils.ts";
 export * from "https://deno.land/std@0.186.0/fmt/colors.ts";
 
 export {
@@ -18,7 +18,7 @@ export { parse as parseYaml, stringify as stringifyYaml } from "https://deno.lan
 export type { YAMLError } from "https://deno.land/std@0.186.0/yaml/_error.ts";
 
 export { exists as fsExists } from "https://deno.land/std@0.186.0/fs/exists.ts";
-export { memoizePromise } from "https://deno.land/x/utils@2.12.0/async_utils.ts";
+export { memoizePromise } from "https://deno.land/x/utils@2.12.1/async_utils.ts";
 
 export { delay } from "https://deno.land/std@0.186.0/async/delay.ts";
 export { iterateReader, writeAll, writeAllSync } from "https://deno.land/std@0.186.0/streams/mod.ts";
