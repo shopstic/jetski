@@ -140,6 +140,14 @@ export function createCloudInitConfig(
       },
       {
         owner: "root:root",
+        path: "/etc/sysctl.d/990-inotify.conf",
+        content: [
+          "fs.inotify.max_user_watches=122425",
+          "fs.inotify.max_user_instances=122425",
+        ].join("\n"),
+      },
+      {
+        owner: "root:root",
         path: "/etc/rancher/k3s/registries.yaml",
         content: stringifyYaml({
           mirrors: {
