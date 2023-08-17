@@ -140,10 +140,11 @@ export function createCloudInitConfig(
       },
       {
         owner: "root:root",
-        path: "/etc/sysctl.d/990-inotify.conf",
+        path: "/etc/sysctl.d/98-inotify.conf",
         content: [
-          "fs.inotify.max_user_watches=122425",
-          "fs.inotify.max_user_instances=122425",
+          "fs.inotify.max_user_watches = 122425",
+          "fs.inotify.max_user_instances = 122425",
+          "",
         ].join("\n"),
       },
       {
@@ -172,6 +173,7 @@ export function createCloudInitConfig(
         : []),
     ],
     runcmd: [
+      "sysctl -p /etc/sysctl.d/98-inotify.conf",
       `curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=${k3sVersion} ${
         kubelet ? 'INSTALL_K3S_EXEC="--kubelet-arg=config=/etc/rancher/k3s/kubelet-config.yaml"' : ""
       } sh -`,
