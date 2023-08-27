@@ -3,13 +3,13 @@ set -euo pipefail
 
 code_quality() {
   echo "Checking formatting..."
-  deno fmt --check ./src
+  deno fmt --check
   echo "Linting..."
-  deno lint ./src
+  deno lint
 }
 
 auto_fmt() {
-  deno fmt ./src
+  deno fmt
 }
 
 update_cache() {
