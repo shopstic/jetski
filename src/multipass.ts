@@ -334,7 +334,7 @@ export async function multipassResolveClusterLocalDns(
   },
 ) {
   log(`Adding DNS resolution for svc.${clusterDomain} to cni0 interface`);
-  print("Waiting for cni0 network interface to be created...");
+  await print("Waiting for cni0 network interface to be created...");
 
   try {
     while (!abortSignal?.aborted) {
@@ -346,7 +346,7 @@ export async function multipassResolveClusterLocalDns(
           e instanceof NonZeroExitError &&
           e.output?.err.includes('Device "cni0" does not exist.')
         ) {
-          print(".");
+          await print(".");
           await delay(1000);
         } else {
           throw e;
@@ -354,7 +354,7 @@ export async function multipassResolveClusterLocalDns(
       }
     }
   } finally {
-    print("\n");
+    await print("\n");
   }
 
   await multipassInheritSsh({

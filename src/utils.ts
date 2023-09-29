@@ -1,4 +1,4 @@
-import { dirname, green, printErrLines, printOutLines, resolvePath, validate, writeAllSync } from "./deps.ts";
+import { dirname, green, printErrLines, printOutLines, resolvePath, validate } from "./deps.ts";
 import { fsExists, gray, inheritExec, joinPath, red, stringifyYaml } from "./deps.ts";
 import { InstanceConfig, InstanceConfigSchema } from "./types.ts";
 
@@ -182,9 +182,10 @@ export function createCloudInitConfig(
   };
 }
 
-export function print(...params: string[]) {
-  const text = new TextEncoder().encode(params.join(" "));
-  writeAllSync(Deno.stdout, text);
+export async function print(...params: string[]) {
+  await ReadableStream.from([new TextEncoder().encode(params.join(" "))]).pipeTo(Deno.stdout.writable, {
+    preventClose: true,
+  });
 }
 
 export function log(...params: string[]) {

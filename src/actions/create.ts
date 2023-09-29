@@ -10,7 +10,6 @@ import {
   resolvePath,
   stringifyYaml,
   Type,
-  writeAll,
 } from "../deps.ts";
 import {
   multipass,
@@ -101,7 +100,10 @@ export async function createInstance(instance: InstanceConfig) {
       abortSignal: cloudInitLogTailingAbort.signal,
     });
 
-    multipassLaunchStdoutAbort.abort();
+    if (!multipassLaunchStdoutAbort.signal.aborted) {
+      console.log("multipassLaunchStdoutAbort.abort()");
+      multipassLaunchStdoutAbort.abort();
+    }
 
     return await multipassTailCloudInitOutputLog({ instance, abortSignal: cloudInitLogTailingAbort.signal });
   })();
@@ -126,14 +128,17 @@ export async function createInstance(instance: InstanceConfig) {
       stdout: {
         async read(readable: ReadableStream<Uint8Array>) {
           try {
-            for await (const chunk of readable) {
-              if (multipassLaunchStdoutAbort.signal.aborted) {
-                continue;
-              }
-              await writeAll(Deno.stdout, chunk);
+            await readable.pipeTo(Deno.stdout.writable, {
+              preventClose: true,
+              preventAbort: true,
+              preventCancel: true,
+              signal: multipassLaunchStdoutAbort.signal,
+            });
+          } catch (e) {
+            if (multipassLaunchStdoutAbort.signal.aborted) {
+              return;
             }
-          } finally {
-            await readable.cancel();
+            throw e;
           }
         },
       },

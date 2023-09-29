@@ -1,4 +1,4 @@
-import { Static, Type } from "./deps.ts";
+import { FlexObject, Static, Type } from "./deps.ts";
 
 export const NonEmptyString = Type.String({ minLength: 1 });
 export const Cidr = Type.String({
@@ -43,10 +43,10 @@ export enum InstanceState {
   Unknown = "Unknown",
 }
 
-export const MultipassInfo = Type.PartialObject({
+export const MultipassInfo = FlexObject({
   info: Type.Record(
     Type.String(),
-    Type.PartialObject({
+    FlexObject({
       ipv4: Type.Array(Ipv4),
       state: Type.Enum(InstanceState),
     }),
