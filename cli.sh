@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+SCRIPT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 
 code_quality() {
   echo "Checking formatting..."
@@ -13,18 +14,18 @@ auto_fmt() {
 }
 
 update_cache() {
-  deno cache --lock=deno.lock ./src/deps.ts ./src/app.ts
+  deno cache --lock=deno.lock "${SCRIPT_DIR}"/src/deps.ts "${SCRIPT_DIR}"/src/app.ts
 }
 
 update_lock() {
   rm -f deno.lock
-  deno cache --reload ./src/deps.ts ./src/app.ts
-  deno cache ./src/deps.ts ./src/app.ts --lock ./deno.lock --lock-write
+  deno cache --reload "${SCRIPT_DIR}"/src/deps.ts "${SCRIPT_DIR}"/src/app.ts
+  deno cache "${SCRIPT_DIR}"/src/deps.ts "${SCRIPT_DIR}"/src/app.ts --lock ./deno.lock --lock-write
 }
 
 run() {
   export JETSKI_ENABLE_STACKTRACE=${JETSKI_ENABLE_STACKTRACE:-"0"}
-  deno run -A --check ./src/app.ts "$@"
+  deno run -A --check "${SCRIPT_DIR}"/src/app.ts "$@"
 }
 
 "$@"

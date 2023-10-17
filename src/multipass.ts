@@ -1,4 +1,5 @@
 import {
+  assertExists,
   captureExec,
   cyan,
   delay,
@@ -14,7 +15,7 @@ import {
   validate,
 } from "./deps.ts";
 import { InstanceConfig, InstanceState, MultipassInfo } from "./types.ts";
-import { getSshIp, log, print } from "./utils.ts";
+import { getSshIp, log, ok, print } from "./utils.ts";
 
 export const multipassBin = memoizePromise(() => locateMultipassBin());
 
@@ -293,7 +294,7 @@ export async function multipassPostStart(
   instance: InstanceConfig,
 ): Promise<string> {
   const { name, sshDirectoryPath } = instance;
-  const { state, ipv4 } = await multipassInfo({ name });
+  const { state } = await multipassInfo({ name });
 
   if (state !== InstanceState.Running) {
     throw new Error(
@@ -301,7 +302,37 @@ export async function multipassPostStart(
     );
   }
 
-  const ip = getSshIp(ipv4, instance.filterSshIpByCidr);
+  let ip: string | undefined = undefined;
+
+  if (instance.filterSshIpByCidr) {
+    const maxAttempts = 30;
+    for (let i = 0; i < maxAttempts; i++) {
+      let ipv4: string[] = [];
+
+      try {
+        ipv4 = (await multipassInfo({ name })).ipv4;
+        ip = getSshIp(ipv4, instance.filterSshIpByCidr);
+      } catch (e) {
+        if (i === maxAttempts - 1) {
+          throw e;
+        }
+
+        log(
+          "Waiting for the instance's IP that matches the CIDR filter:",
+          instance.filterSshIpByCidr,
+          "So far got:",
+          ipv4.length > 0 ? ipv4.join(", ") : "none",
+        );
+        await delay(1000);
+      }
+    }
+  } else {
+    ip = getSshIp((await multipassInfo({ name })).ipv4);
+  }
+
+  assertExists(ip);
+
+  ok("Got instance IP", ip);
 
   await multipassResolveClusterLocalDns({ ip, instance });
 
@@ -444,6 +475,8 @@ export async function multipassRoute(
           `'New-NetRoute -DestinationPrefix ${cidr} -InterfaceAlias "vEthernet (Default Switch)" -NextHop ${ip}'`,
         ],
         stdin: { inherit: true },
+        stdout: { read: printOutLines((line) => `${gray("[$ New-NetRoute ]")} ${line}`) },
+        stderr: { read: printErrLines((line) => `${gray("[$ New-NetRoute ]")} ${line}`) },
       });
     }
 
@@ -454,6 +487,8 @@ export async function multipassRoute(
         `'Add-DnsClientNrptRule -Namespace ".svc.${clusterDomain}" -DnsSecEnable -NameServers "${clusterDnsIp}"'`,
       ],
       stdin: { inherit: true },
+      stdout: { read: printOutLines((line) => `${gray("[$ Add-DnsClientNrptRule ]")} ${line}`) },
+      stderr: { read: printErrLines((line) => `${gray("[$ Add-DnsClientNrptRule ]")} ${line}`) },
     });
   } else {
     log("Adding routes, will require root permissions...");
@@ -461,11 +496,15 @@ export async function multipassRoute(
       await inheritExec({
         cmd: ["sudo", "/sbin/route", "add", "-net", cidr, ip],
         stdin: { inherit: true },
+        stdout: { read: printOutLines((line) => `${gray("[$ route ]")} ${line}`) },
+        stderr: { read: printErrLines((line) => `${gray("[$ route ]")} ${line}`) },
       });
     }
 
     await inheritExec({
       cmd: ["sudo", "mkdir", "-p", "/etc/resolver"],
+      stdout: { read: printOutLines((line) => `${gray("[$ resolver ]")} ${line}`) },
+      stderr: { read: printErrLines((line) => `${gray("[$ resolver ]")} ${line}`) },
     });
 
     await inheritExec({
@@ -473,6 +512,8 @@ export async function multipassRoute(
       stdin: {
         pipe: [`domain svc.${clusterDomain}`, `nameserver ${clusterDnsIp}`, "search_order 1", ""].join("\n"),
       },
+      stdout: { read: printOutLines((line) => `${gray("[$ resolver ]")} ${line}`) },
+      stderr: { read: printErrLines((line) => `${gray("[$ resolver ]")} ${line}`) },
     });
   }
 }

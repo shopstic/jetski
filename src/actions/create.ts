@@ -4,6 +4,7 @@ import {
   cyan,
   ExitCode,
   fsExists,
+  gray,
   inheritExec,
   joinPath,
   parseYaml,
@@ -88,8 +89,11 @@ export async function createInstance(instance: InstanceConfig) {
   const cloudInitConfig = createCloudInitConfig({ sshPublicKey, instance });
   const tempDir = await Deno.makeTempDir();
   const cloudInitFilePath = joinPath(tempDir, "cloud-init.yaml");
-  ok("Generated cloud-init.yaml");
-  ok(stringifyYaml(cloudInitConfig));
+  log("Generated cloud-init.yaml");
+  log(gray("--"));
+  log(gray("# Begin cloud-init.yaml"));
+  log(gray(stringifyYaml(cloudInitConfig)));
+  log(gray("# End cloud-init.yaml"));
   await Deno.writeTextFile(cloudInitFilePath, stringifyYaml(cloudInitConfig));
 
   const cloudInitLogTailingAbort = new AbortController();

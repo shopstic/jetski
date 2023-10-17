@@ -188,19 +188,19 @@ export async function print(...params: string[]) {
   });
 }
 
-export function log(...params: string[]) {
+export function log(...params: unknown[]) {
   console.error.apply(console, params);
 }
 
-export function out(...params: string[]) {
+export function out(...params: unknown[]) {
   console.log.apply(console, params);
 }
 
-export function ok(...params: string[]) {
+export function ok(...params: unknown[]) {
   console.error.apply(console, [green("[Success]"), ...params]);
 }
 
-export function err(...params: string[]) {
+export function err(...params: unknown[]) {
   console.error.apply(console, [red("[Error]"), ...params]);
 }
 
