@@ -14,7 +14,7 @@ import {
   validate,
 } from "./deps.ts";
 import { InstanceConfig, InstanceState, MultipassInfo } from "./types.ts";
-import { log, print } from "./utils.ts";
+import { getSshIp, log, print } from "./utils.ts";
 
 export const multipassBin = memoizePromise(() => locateMultipassBin());
 
@@ -272,7 +272,7 @@ export async function multipassTailCloudInitOutputLog(
   log(tag, "Obtaining instance's IP");
   const { ipv4 } = await multipassInfo({ name: instance.name, ignoreStderr: true });
 
-  const ip = ipv4[0];
+  const ip = getSshIp(ipv4, instance.filterSshIpByCidr);
 
   if (!ip) {
     return;
@@ -301,7 +301,7 @@ export async function multipassPostStart(
     );
   }
 
-  const ip = ipv4[0];
+  const ip = getSshIp(ipv4, instance.filterSshIpByCidr);
 
   await multipassResolveClusterLocalDns({ ip, instance });
 

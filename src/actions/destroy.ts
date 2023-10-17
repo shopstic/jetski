@@ -1,14 +1,14 @@
 import { createCliAction, ExitCode, resolvePath, Type, yellow } from "../deps.ts";
 import { multipass, multipassInfo, multipassK3sKillAll, multipassStop, multipassUnroute } from "../multipass.ts";
 import { InstanceConfig, InstanceConfigPathSchema, InstanceState } from "../types.ts";
-import { loadInstanceConfig, ok } from "../utils.ts";
+import { getSshIp, loadInstanceConfig, ok } from "../utils.ts";
 
 export async function destroyInstance(instance: InstanceConfig) {
   const { sshDirectoryPath, name } = instance;
   const { state, ipv4 } = await multipassInfo(instance);
 
   if (state === InstanceState.Running) {
-    const ip = ipv4[0];
+    const ip = getSshIp(ipv4, instance.filterSshIpByCidr);
     await multipassUnroute({ ip, instance });
     await multipassK3sKillAll({ ip, sshDirectoryPath });
     await multipassStop(instance);

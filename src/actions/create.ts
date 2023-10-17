@@ -80,7 +80,7 @@ export async function updateKubeconfig(
 }
 
 export async function createInstance(instance: InstanceConfig) {
-  const { sshDirectoryPath, cpus, memoryGiBs, diskGiBs, image, name } = instance;
+  const { sshDirectoryPath, cpus, memoryGiBs, diskGiBs, image, name, bridged } = instance;
 
   await generateSshKeyPairIfNotExists(instance);
 
@@ -88,6 +88,7 @@ export async function createInstance(instance: InstanceConfig) {
   const cloudInitConfig = createCloudInitConfig({ sshPublicKey, instance });
   const tempDir = await Deno.makeTempDir();
   const cloudInitFilePath = joinPath(tempDir, "cloud-init.yaml");
+  console.log("cloudInitConfig", stringifyYaml(cloudInitConfig));
   await Deno.writeTextFile(cloudInitFilePath, stringifyYaml(cloudInitConfig));
 
   const cloudInitLogTailingAbort = new AbortController();
@@ -122,6 +123,7 @@ export async function createInstance(instance: InstanceConfig) {
         `${diskGiBs}G`,
         "-n",
         name,
+        ...(bridged ? ["--bridged"] : []),
         "--cloud-init",
         cloudInitFilePath,
       ],

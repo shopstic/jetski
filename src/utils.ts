@@ -203,3 +203,58 @@ export function ok(...params: string[]) {
 export function err(...params: string[]) {
   console.error.apply(console, [red("[Error]"), ...params]);
 }
+
+const ipv4ToBinary = (ipv4: string) =>
+  ipv4.split(".").map((octet) => parseInt(octet, 10).toString(2).padStart(8, "0"))
+    .join("");
+
+export const isIpv4InCidr = (
+  cidrv4: string,
+  ipv4: string,
+  { isNetwork, isBroadcast } = { isNetwork: false, isBroadcast: false },
+) => {
+  const [networkRange, bits] = cidrv4.split("/");
+  const IPv4Binary = ipv4ToBinary(ipv4),
+    rangeBinary = ipv4ToBinary(networkRange);
+
+  for (let i = 0; i < +bits; i++) {
+    if (IPv4Binary.charAt(i) !== rangeBinary.charAt(i)) {
+      return false;
+    }
+  }
+
+  if (isNetwork && +bits < 31) {
+    const networkAdressBinary = rangeBinary.substring(0, +bits).padEnd(32, "0");
+    if (networkAdressBinary === IPv4Binary) return true;
+  }
+
+  if (isBroadcast && +bits < 31) {
+    const broadcastAddressBinary = rangeBinary.substring(0, +bits).padEnd(
+      32,
+      "1",
+    );
+    if (broadcastAddressBinary === IPv4Binary) return true;
+  }
+
+  if (!(isNetwork && isBroadcast)) return true;
+
+  return false;
+};
+
+export function getSshIp(ipv4s: string[], filterByCidr?: string) {
+  if (!filterByCidr) {
+    return ipv4s[0];
+  }
+
+  const found = ipv4s.find((ipv4) => isIpv4InCidr(filterByCidr, ipv4));
+
+  if (!found) {
+    throw new Error(
+      `No SSH IP address found that matches the CIDR filter: ${filterByCidr}. All available IPs are: ${
+        ipv4s.join(", ")
+      }`,
+    );
+  }
+
+  return found;
+}

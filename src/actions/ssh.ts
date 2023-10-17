@@ -1,7 +1,7 @@
 import { createCliAction, ExitCode, gray, resolvePath, Type } from "../deps.ts";
 import { multipassInfo, multipassSshInteractive } from "../multipass.ts";
 import { InstanceConfigPathSchema, InstanceState } from "../types.ts";
-import { loadInstanceConfig, log } from "../utils.ts";
+import { getSshIp, loadInstanceConfig, log } from "../utils.ts";
 
 export default createCliAction(
   Type.Object({
@@ -22,7 +22,7 @@ export default createCliAction(
     const exitCode = await multipassSshInteractive({
       cmd: unparsedArgs,
       sshDirectoryPath,
-      ip: ipv4[0],
+      ip: getSshIp(ipv4, instance.filterSshIpByCidr),
     });
 
     return new ExitCode(exitCode);

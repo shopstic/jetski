@@ -2,15 +2,17 @@ import { InstanceConfig } from "../src/types.ts";
 
 export default {
   name: "jetski-example",
-  image: "lts",
+  image: "22.04",
   cpus: 1,
   memoryGiBs: 2,
-  diskGiBs: 10,
-  k3sVersion: "v1.23.16+k3s1",
+  diskGiBs: 5,
+  k3sVersion: "v1.24.17+k3s1",
   clusterCidr: "10.254.254.0/24",
   serviceCidr: "10.254.255.0/24",
   clusterDnsIp: "10.254.255.10",
   clusterDomain: "jetski.local",
+  bridged: true,
+  filterSshIpByCidr: "192.168.2.0/24",
   disableComponents: {
     traefik: true,
     metricsServer: true
