@@ -1,4 +1,7 @@
 {
+  "tasks": {
+    "check_all": "deno check **/*.ts"
+  },
   "fmt": {
     "include": [
       "src/",
