@@ -23,7 +23,7 @@ export default createCliAction(
     await multipassStart(instance);
     const ip = await multipassPostStart(instance, signal);
 
-    if (instance.isBootstrapInstance) {
+    if (instance.role === "server") {
       await updateKubeconfig({ ip, instance });
     }
 

@@ -1,7 +1,7 @@
 import { createCliAction, ExitCode, resolvePath, Type } from "../deps.ts";
 import { multipassInfo, multipassK3sKillAll, multipassStop, multipassUnroute } from "../multipass.ts";
 import { InstanceConfigPathSchema, InstanceState } from "../types.ts";
-import { getSshIp, loadInstanceConfig, ok } from "../utils.ts";
+import { getExternalIp, loadInstanceConfig, ok } from "../utils.ts";
 
 export default createCliAction(
   Type.Object({
@@ -18,9 +18,9 @@ export default createCliAction(
       throw new Error(`Instance '${name}' is not in 'Running' state. Current state is '${state}'`);
     }
 
-    const ip = getSshIp(ipv4, instance.externalNetworkCidr);
+    const ip = getExternalIp(ipv4, instance.externalNetworkCidr);
 
-    if (instance.isBootstrapInstance) {
+    if (instance.role === "server") {
       await multipassUnroute({ ip, instance });
     }
     await multipassK3sKillAll({ ip, sshDirectoryPath });

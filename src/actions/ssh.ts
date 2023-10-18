@@ -1,7 +1,7 @@
 import { createCliAction, ExitCode, gray, resolvePath, Type } from "../deps.ts";
 import { multipassInfo, multipassSshInteractive } from "../multipass.ts";
 import { InstanceConfigPathSchema, InstanceState } from "../types.ts";
-import { getSshIp, loadInstanceConfig, log } from "../utils.ts";
+import { getExternalIp, loadInstanceConfig, log } from "../utils.ts";
 
 export default createCliAction(
   Type.Object({
@@ -19,13 +19,13 @@ export default createCliAction(
       throw new Error(`Instance '${name}' is not in 'Running' state. Current state is '${state}'`);
     }
 
-    const ip = getSshIp(ipv4, instance.externalNetworkCidr);
+    const ip = getExternalIp(ipv4, instance.externalNetworkCidr);
     log(gray(`Instance IP is '${ip}'`));
 
     const exitCode = await multipassSshInteractive({
       cmd: unparsedArgs,
       sshDirectoryPath,
-      ip: getSshIp(ipv4, instance.externalNetworkCidr),
+      ip: getExternalIp(ipv4, instance.externalNetworkCidr),
     });
 
     return new ExitCode(exitCode);

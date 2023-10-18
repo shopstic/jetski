@@ -1,6 +1,7 @@
 import { ServerInstanceConfig } from "../../src/types.ts";
 
 export default {
+  role: "server",
   name: "jetski-multi-node-one",
   image: "22.04",
   cpus: 1,
@@ -16,7 +17,7 @@ export default {
   externalNetworkInterface: "eth1",
   disableComponents: {
     traefik: true,
-    metricsServer: true
+    metricsServer: true,
   },
   nodeLabels: {
     "com.jetski/foo": "bar",
@@ -24,9 +25,8 @@ export default {
   },
   // datastoreEndpoint: "http://192.168.2.22:2379"
   kubelet: {
-    maxPods: 500
+    maxPods: 500,
   },
-  isBootstrapInstance: true,
   sshDirectoryPath: "./.secrets/.ssh",
   joinMetadataPath: "./.secrets/join.json",
 } satisfies ServerInstanceConfig;

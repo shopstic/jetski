@@ -165,8 +165,10 @@ export async function createInstance(instance: InstanceConfig, signal: AbortSign
 
   const ip = await multipassPostStart(instance, signal);
 
-  if (instance.isBootstrapInstance) {
+  if (instance.role === "server") {
     await updateKubeconfig({ ip, instance });
+  } else {
+    ok(`Agent ${cyan(name)} is ready!`);
   }
 }
 

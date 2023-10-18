@@ -1,3 +1,4 @@
+import { PosInt } from "./deps.ts";
 import { FlexObject, NonEmptyString, Static, Type } from "./deps/typebox.ts";
 
 export const Cidr = NonEmptyString({
@@ -10,22 +11,23 @@ export const Ipv4 = NonEmptyString({
 export const Url = NonEmptyString({ format: "url" });
 
 export const ServerInstanceConfigSchema = Type.Object({
+  role: Type.Literal("server"),
   name: NonEmptyString(),
   image: Type.Optional(NonEmptyString()),
-  cpus: Type.Number(),
-  memoryGiBs: Type.Number(),
-  diskGiBs: Type.Number(),
+  cpus: PosInt(),
+  memoryGiBs: PosInt(),
+  diskGiBs: PosInt(),
   bridged: Type.Optional(Type.Boolean()),
   k3sVersion: NonEmptyString(),
-  datastoreEndpoint: Type.Optional(NonEmptyString()),
   externalNetworkCidr: Type.Optional(Cidr),
   externalNetworkInterface: Type.Optional(NonEmptyString()),
+  datastoreEndpoint: Type.Optional(NonEmptyString()),
   clusterCidr: Cidr,
   serviceCidr: Cidr,
   clusterDnsIp: Ipv4,
   clusterDomain: NonEmptyString({ format: "hostname" }),
   kubelet: Type.Optional(Type.Object({
-    maxPods: Type.Number(),
+    maxPods: PosInt(),
   })),
   disableComponents: Type.Optional(Type.Object({
     coredns: Type.Optional(Type.Boolean()),
@@ -37,23 +39,34 @@ export const ServerInstanceConfigSchema = Type.Object({
   nodeLabels: Type.Optional(Type.Record(NonEmptyString(), NonEmptyString())),
   nodeTaints: Type.Optional(Type.Record(NonEmptyString(), NonEmptyString())),
   sshDirectoryPath: NonEmptyString(),
-  isBootstrapInstance: Type.Optional(Type.Boolean()),
   joinMetadataPath: Type.Optional(NonEmptyString()),
 });
 
 export const AgentInstanceConfigSchema = Type.Object({
+  role: Type.Literal("agent"),
   name: NonEmptyString(),
   image: Type.Optional(NonEmptyString()),
-  cpus: Type.Number(),
-  memoryGiBs: Type.Number(),
-  diskGiBs: Type.Number(),
+  cpus: PosInt(),
+  memoryGiBs: PosInt(),
+  diskGiBs: PosInt(),
   bridged: Type.Optional(Type.Boolean()),
+  clusterDomain: NonEmptyString({ format: "hostname" }),
+  kubelet: Type.Optional(Type.Object({
+    maxPods: PosInt(),
+  })),
+  externalNetworkCidr: Type.Optional(Cidr),
+  externalNetworkInterface: Type.Optional(NonEmptyString()),
   k3sVersion: NonEmptyString(),
-  filterSshIpByCidr: Type.Optional(Cidr),
   nodeLabels: Type.Optional(Type.Record(NonEmptyString(), NonEmptyString())),
+  nodeTaints: Type.Optional(Type.Record(NonEmptyString(), NonEmptyString())),
   sshDirectoryPath: NonEmptyString(),
   joinMetadataPath: NonEmptyString(),
 });
+
+export const InstanceConfigSchema = Type.Union([
+  ServerInstanceConfigSchema,
+  AgentInstanceConfigSchema,
+]);
 
 export const JoinMetadataSchema = Type.Object({
   url: NonEmptyString({ format: "uri" }),
@@ -82,9 +95,7 @@ export const MultipassInfo = FlexObject({
 
 export type ServerInstanceConfig = Static<typeof ServerInstanceConfigSchema>;
 export type AgentInstanceConfig = Static<typeof AgentInstanceConfigSchema>;
-
-// Backwards compatibility
-export type InstanceConfig = ServerInstanceConfig;
+export type InstanceConfig = Static<typeof InstanceConfigSchema>;
 
 export const InstanceConfigPathSchema = Type.String({
   minLength: 1,

@@ -15,8 +15,8 @@ import {
   StdOutputBehavior,
   validate,
 } from "./deps.ts";
-import { InstanceConfig, InstanceState, JoinMetadata, MultipassInfo } from "./types.ts";
-import { err, getSshIp, log, ok, print } from "./utils.ts";
+import { InstanceConfig, InstanceState, JoinMetadata, MultipassInfo, ServerInstanceConfig } from "./types.ts";
+import { err, getExternalIp, log, ok, print } from "./utils.ts";
 
 export const multipassBin = memoizePromise(() => locateMultipassBin());
 
@@ -234,7 +234,7 @@ export async function multipassK3sKillAll(
   { ip, sshDirectoryPath }: { ip: string; sshDirectoryPath: string },
 ) {
   const tag = gray(`[$ k3s-killall.sh ]`);
-  log("Going to SSH and execute k3s-killall.sh");
+  log(`Going to SSH and execute k3s-killall.sh`);
 
   await multipassInheritSsh({
     sshDirectoryPath,
@@ -306,13 +306,7 @@ export async function multipassTailCloudInitOutputLog(
   await multipassWaitForState({ isReady: (state) => state === InstanceState.Running, instance, abortSignal });
 
   log(tag, "Obtaining instance's IP");
-  const { ipv4 } = await multipassInfo({ name: instance.name, ignoreStderr: true });
-
-  const ip = getSshIp(ipv4, instance.externalNetworkCidr);
-
-  if (!ip) {
-    return;
-  }
+  const ip = await multipassWaitForExternalIp(instance, abortSignal);
 
   log(tag, "Got instance's IP", cyan(ip));
 
@@ -323,6 +317,41 @@ export async function multipassTailCloudInitOutputLog(
     tag,
     abortSignal,
   });
+}
+
+export async function multipassWaitForExternalIp(
+  { name, externalNetworkCidr }: InstanceConfig,
+  abortSignal: AbortSignal,
+): Promise<string> {
+  if (externalNetworkCidr) {
+    return await (async () => {
+      const maxAttempts = 30;
+      for (let i = 0; i < maxAttempts; i++) {
+        if (abortSignal.aborted) {
+          throw abortSignal.reason;
+        }
+
+        let ipv4: string[] = [];
+
+        try {
+          ipv4 = (await multipassInfo({ name })).ipv4;
+          return getExternalIp(ipv4, externalNetworkCidr);
+        } catch (_) {
+          log(
+            "Waiting for the instance's IP that matches the CIDR filter:",
+            externalNetworkCidr,
+            "So far got:",
+            ipv4.length > 0 ? ipv4.join(", ") : "none",
+          );
+          await delay(1000, { signal: abortSignal });
+        }
+      }
+
+      throw new Error(`Failed obtaining instance IP after ${maxAttempts} attempts`);
+    })();
+  }
+
+  return getExternalIp((await multipassInfo({ name })).ipv4);
 }
 
 export async function multipassPostStart(
@@ -351,45 +380,14 @@ export async function multipassPostStart(
     );
   }
 
-  let ip: string | undefined = undefined;
-
-  if (instance.externalNetworkCidr) {
-    ip = await (async () => {
-      const maxAttempts = 30;
-      for (let i = 0; i < maxAttempts; i++) {
-        if (abortSignal.aborted) {
-          throw abortSignal.reason;
-        }
-
-        let ipv4: string[] = [];
-
-        try {
-          ipv4 = (await multipassInfo({ name })).ipv4;
-          return getSshIp(ipv4, instance.externalNetworkCidr);
-        } catch (_) {
-          log(
-            "Waiting for the instance's IP that matches the CIDR filter:",
-            instance.externalNetworkCidr,
-            "So far got:",
-            ipv4.length > 0 ? ipv4.join(", ") : "none",
-          );
-          await delay(1000, { signal: abortSignal });
-        }
-      }
-
-      throw new Error(`Failed obtaining instance IP after ${maxAttempts} attempts`);
-    })();
-  } else {
-    ip = getSshIp((await multipassInfo({ name })).ipv4);
-  }
+  const ip = await multipassWaitForExternalIp(instance, abortSignal);
 
   assertExists(ip);
 
-  ok("Got instance IP", ip);
+  ok("Got instance IP", cyan(ip));
 
-  await multipassWaitForSshReady({ ip, abortSignal, sshDirectoryPath });
-
-  if (instance.isBootstrapInstance) {
+  if (instance.role === "server") {
+    await multipassWaitForSshReady({ ip, abortSignal, sshDirectoryPath });
     await multipassResolveClusterLocalDns({ ip, instance });
 
     if (instance.joinMetadataPath) {
@@ -409,21 +407,7 @@ export async function multipassPostStart(
       await ensureFile(instance.joinMetadataPath);
       await Deno.writeTextFile(instance.joinMetadataPath, JSON.stringify(joinMetadata, null, 2));
     }
-  }
 
-  /* if (instance.nodeLabels) {
-    const nodeLabels = Object.entries(instance.nodeLabels).map(([key, value]) => `${key}=${value}`);
-
-    log("Adding labels to node:", ...nodeLabels.map((l) => cyan(l)));
-    await multipassInheritSsh({
-      ip,
-      sshDirectoryPath,
-      cmd: ["kubectl", "label", "node", name, "--overwrite", ...nodeLabels],
-      tag: gray("[$ kubectl ]"),
-    });
-  } */
-
-  if (instance.isBootstrapInstance) {
     await multipassRoute({ ip, instance });
   }
 
@@ -437,7 +421,7 @@ export async function multipassResolveClusterLocalDns(
     instance: { sshDirectoryPath, clusterDnsIp, clusterDomain },
   }: {
     ip: string;
-    instance: InstanceConfig;
+    instance: ServerInstanceConfig;
     abortSignal?: AbortSignal;
   },
 ) {
@@ -490,7 +474,7 @@ export async function multipassResolveClusterLocalDns(
 export async function multipassUnroute(
   { ip, instance: { clusterCidr, serviceCidr, clusterDomain } }: {
     ip: string;
-    instance: InstanceConfig;
+    instance: ServerInstanceConfig;
   },
 ) {
   const isWindows = (await multipassBin()).endsWith(".exe");
@@ -551,7 +535,7 @@ export async function multipassUnroute(
 export async function multipassRoute(
   { ip, instance: { clusterCidr, serviceCidr, clusterDomain, clusterDnsIp } }: {
     ip: string;
-    instance: InstanceConfig;
+    instance: ServerInstanceConfig;
   },
 ) {
   const isWindows = (await multipassBin()).endsWith(".exe");

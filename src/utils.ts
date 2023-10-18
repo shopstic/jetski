@@ -1,6 +1,6 @@
 import { dirname, green, printErrLines, printOutLines, resolvePath, validate } from "./deps.ts";
 import { fsExists, gray, inheritExec, joinPath, red, stringifyYaml } from "./deps.ts";
-import { InstanceConfig, JoinMetadataSchema, ServerInstanceConfigSchema } from "./types.ts";
+import { InstanceConfig, InstanceConfigSchema, JoinMetadataSchema } from "./types.ts";
 
 export async function loadInstanceConfig(
   instancePath: string,
@@ -13,7 +13,7 @@ export async function loadInstanceConfig(
     throw new Error("Instance config module does not have a default export");
   }
 
-  const instanceResult = validate(ServerInstanceConfigSchema, instanceMod.default);
+  const instanceResult = validate(InstanceConfigSchema, instanceMod.default);
 
   if (!instanceResult.isSuccess) {
     throw new Error(
@@ -41,7 +41,7 @@ export async function loadInstanceConfig(
   return {
     ...config,
     sshDirectoryPath,
-    joinMetadataPath,
+    joinMetadataPath: joinMetadataPath!,
   };
 }
 
@@ -90,21 +90,7 @@ export async function generateSshKeyPairIfNotExists(
 export async function createCloudInitConfig(
   {
     sshPublicKey,
-    instance: {
-      clusterCidr,
-      serviceCidr,
-      clusterDnsIp,
-      clusterDomain,
-      k3sVersion,
-      disableComponents,
-      datastoreEndpoint,
-      kubelet,
-      isBootstrapInstance,
-      joinMetadataPath,
-      externalNetworkInterface,
-      nodeLabels,
-      nodeTaints,
-    },
+    instance,
   }: {
     sshPublicKey: string;
     instance: InstanceConfig;
@@ -112,12 +98,8 @@ export async function createCloudInitConfig(
 ) {
   const joinMetadata = await (async () => {
     try {
-      if (!isBootstrapInstance) {
-        if (!joinMetadataPath) {
-          throw new Error(`Instance is not a bootstrap instance but no join-metadata path is configured`);
-        }
-
-        const content = JSON.parse(await Deno.readTextFile(joinMetadataPath));
+      if (instance.role === "agent") {
+        const content = JSON.parse(await Deno.readTextFile(instance.joinMetadataPath));
         const result = validate(JoinMetadataSchema, content);
 
         if (!result.isSuccess) {
@@ -132,20 +114,52 @@ export async function createCloudInitConfig(
         return result.value;
       }
     } catch (e) {
-      throw new Error(`Failed reading join metadata from ${joinMetadataPath}. Reason: ${e.message}`, e);
+      throw new Error(`Failed reading join metadata from ${instance.joinMetadataPath}. Reason: ${e.message}`, e);
     }
   })();
 
-  const k3sConfigDisable = [
-    ...(disableComponents?.coredns ? ["coredns"] : []),
-    ...(disableComponents?.localStorage ? ["local-storage"] : []),
-    ...(disableComponents?.metricsServer ? ["metrics-server"] : []),
-    ...(disableComponents?.servicelb ? ["servicelb"] : []),
-    ...(disableComponents?.traefik ? ["traefik"] : []),
-  ];
+  const { kubelet, externalNetworkInterface, nodeLabels, nodeTaints, clusterDomain, k3sVersion } = instance;
+
+  let k3sConfig: Record<string, unknown>;
 
   const nodeLabelsConfigValue = Object.entries(nodeLabels ?? {}).map(([key, value]) => `${key}=${value}`);
   const nodeTaintsConfigValue = Object.entries(nodeTaints ?? {}).map(([key, value]) => `${key}=${value}`);
+
+  if (instance.role === "server") {
+    const {
+      clusterCidr,
+      serviceCidr,
+      clusterDnsIp,
+      clusterDomain,
+      disableComponents,
+      datastoreEndpoint,
+    } = instance;
+
+    const k3sConfigDisable = [
+      ...(disableComponents?.coredns ? ["coredns"] : []),
+      ...(disableComponents?.localStorage ? ["local-storage"] : []),
+      ...(disableComponents?.metricsServer ? ["metrics-server"] : []),
+      ...(disableComponents?.servicelb ? ["servicelb"] : []),
+      ...(disableComponents?.traefik ? ["traefik"] : []),
+    ];
+
+    k3sConfig = {
+      "write-kubeconfig-mode": "0644",
+      "cluster-cidr": clusterCidr,
+      "service-cidr": serviceCidr,
+      "cluster-dns": clusterDnsIp,
+      "cluster-domain": clusterDomain,
+      "disable": k3sConfigDisable,
+      "node-label": nodeLabelsConfigValue,
+      "node-taint": nodeTaintsConfigValue,
+      ...(datastoreEndpoint ? { "datastore-endpoint": datastoreEndpoint } : {}),
+    };
+  } else {
+    k3sConfig = {
+      "node-label": nodeLabelsConfigValue,
+      "node-taint": nodeTaintsConfigValue,
+    };
+  }
 
   return {
     users: [
@@ -165,22 +179,7 @@ export async function createCloudInitConfig(
       {
         owner: "root:root",
         path: "/etc/rancher/k3s/config.yaml",
-        content: isBootstrapInstance
-          ? stringifyYaml({
-            "write-kubeconfig-mode": "0644",
-            "cluster-cidr": clusterCidr,
-            "service-cidr": serviceCidr,
-            "cluster-dns": clusterDnsIp,
-            "cluster-domain": clusterDomain,
-            "disable": k3sConfigDisable,
-            "node-label": nodeLabelsConfigValue,
-            "node-taint": nodeTaintsConfigValue,
-            ...(datastoreEndpoint ? { "datastore-endpoint": datastoreEndpoint } : {}),
-          })
-          : stringifyYaml({
-            "node-label": nodeLabelsConfigValue,
-            "node-taint": nodeTaintsConfigValue,
-          }),
+        content: stringifyYaml(k3sConfig),
       },
       {
         owner: "root:root",
@@ -320,7 +319,7 @@ export const isIpv4InCidr = (
   return false;
 };
 
-export function getSshIp(ipv4s: string[], filterByCidr?: string) {
+export function getExternalIp(ipv4s: string[], filterByCidr?: string) {
   if (!filterByCidr) {
     return ipv4s[0];
   }

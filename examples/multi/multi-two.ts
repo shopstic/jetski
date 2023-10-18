@@ -1,8 +1,25 @@
-import { ServerInstanceConfig } from "../../src/types.ts";
-import bootstrapInstanceConfig from "./multi-one.ts";
+import { AgentInstanceConfig } from "../../src/types.ts";
+import serverInstanceConfig from "./multi-one.ts";
+
+const {
+  k3sVersion,
+  sshDirectoryPath,
+  joinMetadataPath,
+  clusterDomain,
+  bridged,
+  externalNetworkCidr,
+  externalNetworkInterface,
+} = serverInstanceConfig;
 
 export default {
-  ...bootstrapInstanceConfig,
+  role: "agent",
+  k3sVersion,
+  sshDirectoryPath,
+  joinMetadataPath,
+  clusterDomain,
+  externalNetworkCidr,
+  externalNetworkInterface,
+  bridged,
   name: "jetski-multi-node-two",
   image: "22.04",
   cpus: 1,
@@ -12,5 +29,4 @@ export default {
     "com.jetski/foo": "bar",
     "com.jetski/baz": "boo",
   },
-  isBootstrapInstance: false
-} satisfies ServerInstanceConfig;
+} satisfies AgentInstanceConfig;
