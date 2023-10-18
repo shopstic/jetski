@@ -423,6 +423,8 @@ export async function multipassUnroute(
       await inheritExec({
         cmd,
         stdin: { inherit: true },
+        stdout: { read: printOutLines((line) => `${gray("[$ Remove-NetRoute ]")} ${line}`) },
+        stderr: { read: printErrLines((line) => `${gray("[$ Remove-NetRoute ]")} ${line}`) },
       });
     }
 
@@ -433,6 +435,8 @@ export async function multipassUnroute(
         `Foreach($x in (Get-DnsClientNrptRule | Where-Object {$_.Namespace -eq ".svc.${clusterDomain}"} | foreach {$_.Name})){ Remove-DnsClientNrptRule -Name "$x" -Force }`,
       ],
       stdin: { inherit: true },
+      stdout: { read: printOutLines((line) => `${gray("[$ Remove-DnsClientNrptRule ]")} ${line}`) },
+      stderr: { read: printErrLines((line) => `${gray("[$ Remove-DnsClientNrptRule ]")} ${line}`) },
     });
   } else {
     log("Removing routes, will require root permissions...");
@@ -441,6 +445,8 @@ export async function multipassUnroute(
         await inheritExec({
           cmd: ["sudo", "/sbin/route", "delete", "-net", cidr, ip],
           stdin: { inherit: true },
+          stdout: { read: printOutLines((line) => `${gray("[$ route ]")} ${line}`) },
+          stderr: { read: printErrLines((line) => `${gray("[$ route ]")} ${line}`) },
         });
       } catch {
         // Ignore
@@ -451,6 +457,8 @@ export async function multipassUnroute(
       await inheritExec({
         cmd: ["sudo", "rm", "-f", `/etc/resolver/svc.${clusterDomain}`],
         stdin: { inherit: true },
+        stdout: { read: printOutLines((line) => `${gray("[$ resolver ]")} ${line}`) },
+        stderr: { read: printErrLines((line) => `${gray("[$ resolver ]")} ${line}`) },
       });
     } catch {
       // Ignore
