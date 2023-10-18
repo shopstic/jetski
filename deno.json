@@ -4,12 +4,18 @@
       "src/",
       "examples/"
     ],
+    "exclude": [
+      "**/.secrets/*"
+    ],
     "lineWidth": 120
   },
   "lint": {
     "include": [
       "src/",
       "examples/"
+    ],
+    "exclude": [
+      "**/.secrets/*"
     ]
   }
 }
