@@ -8,8 +8,12 @@ export async function destroyInstance(instance: InstanceConfig) {
   const { state, ipv4 } = await multipassInfo(instance);
 
   if (state === InstanceState.Running) {
-    const ip = getSshIp(ipv4, instance.filterSshIpByCidr);
-    await multipassUnroute({ ip, instance });
+    const ip = getSshIp(ipv4, instance.externalNetworkCidr);
+
+    if (instance.isBootstrapInstance) {
+      await multipassUnroute({ ip, instance });
+    }
+
     await multipassK3sKillAll({ ip, sshDirectoryPath });
     await multipassStop(instance);
   }

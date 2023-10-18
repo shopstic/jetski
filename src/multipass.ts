@@ -3,6 +3,7 @@ import {
   captureExec,
   cyan,
   delay,
+  ensureFile,
   ExecAbortedError,
   gray,
   inheritExec,
@@ -14,8 +15,8 @@ import {
   StdOutputBehavior,
   validate,
 } from "./deps.ts";
-import { InstanceConfig, InstanceState, MultipassInfo } from "./types.ts";
-import { getSshIp, log, ok, print } from "./utils.ts";
+import { InstanceConfig, InstanceState, JoinMetadata, MultipassInfo } from "./types.ts";
+import { err, getSshIp, log, ok, print } from "./utils.ts";
 
 export const multipassBin = memoizePromise(() => locateMultipassBin());
 
@@ -121,9 +122,10 @@ export async function multipassInfo(
 }
 
 function multipassCreateSshCommand(
-  { sshDirectoryPath, ip }: { sshDirectoryPath: string; ip: string },
+  { sshDirectoryPath, ip, timeoutSeconds }: { sshDirectoryPath: string; ip: string; timeoutSeconds?: number },
 ) {
   return [
+    ...(timeoutSeconds !== undefined) ? ["timeout", String(timeoutSeconds)] : [],
     "ssh",
     "-o",
     "UserKnownHostsFile=/dev/null",
@@ -154,18 +156,19 @@ export async function multipassSshInteractive({ cmd, sshDirectoryPath, ip }: {
 }
 
 export async function multipassInheritSsh(
-  { cmd, sshDirectoryPath, ip, abortSignal, tag, stdin }: {
+  { cmd, sshDirectoryPath, ip, abortSignal, tag, stdin, timeoutSeconds }: {
     ip: string;
     sshDirectoryPath: string;
     cmd: string[];
     abortSignal?: AbortSignal;
     tag: string;
     stdin?: StdInputBehavior;
+    timeoutSeconds?: number;
   },
 ): Promise<void> {
   return await inheritExec({
     cmd: [
-      ...multipassCreateSshCommand({ sshDirectoryPath, ip }),
+      ...multipassCreateSshCommand({ sshDirectoryPath, ip, timeoutSeconds }),
       ...cmd,
     ],
     abortSignal: abortSignal,
@@ -175,18 +178,50 @@ export async function multipassInheritSsh(
   });
 }
 
+export async function multipassWaitForSshReady(
+  { ip, abortSignal, sshDirectoryPath }: { ip: string; abortSignal: AbortSignal; sshDirectoryPath: string },
+) {
+  await print("Waiting for SSH to be ready...");
+  const maxAttempts = 30;
+  try {
+    for (let i = 0; i < maxAttempts; i++) {
+      try {
+        await multipassCaptureSsh({ cmd: ["date"], ip, sshDirectoryPath, abortSignal, timeoutSeconds: 2 });
+        return;
+      } catch (e) {
+        if (
+          e instanceof NonZeroExitError && (
+            e.exitCode === 124 || // Exit code of the 'timeout' command
+            e.output?.err.includes("Operation timed out")
+          )
+        ) {
+          await print(".");
+          await delay(1000);
+        } else {
+          throw e;
+        }
+      }
+    }
+  } finally {
+    await print("\n");
+  }
+
+  throw new Error(`Failed waiting for SSH after ${maxAttempts} attempts`);
+}
+
 export async function multipassCaptureSsh(
-  { cmd, sshDirectoryPath, ip, abortSignal, stdin }: {
+  { cmd, sshDirectoryPath, ip, abortSignal, stdin, timeoutSeconds }: {
     ip: string;
     sshDirectoryPath: string;
     cmd: string[];
     abortSignal?: AbortSignal;
     stdin?: StdInputBehavior;
+    timeoutSeconds?: number;
   },
 ) {
   return await captureExec({
     cmd: [
-      ...multipassCreateSshCommand({ sshDirectoryPath, ip }),
+      ...multipassCreateSshCommand({ sshDirectoryPath, ip, timeoutSeconds }),
       ...cmd,
     ],
     abortSignal: abortSignal,
@@ -273,7 +308,7 @@ export async function multipassTailCloudInitOutputLog(
   log(tag, "Obtaining instance's IP");
   const { ipv4 } = await multipassInfo({ name: instance.name, ignoreStderr: true });
 
-  const ip = getSshIp(ipv4, instance.filterSshIpByCidr);
+  const ip = getSshIp(ipv4, instance.externalNetworkCidr);
 
   if (!ip) {
     return;
@@ -292,9 +327,23 @@ export async function multipassTailCloudInitOutputLog(
 
 export async function multipassPostStart(
   instance: InstanceConfig,
+  abortSignal: AbortSignal,
 ): Promise<string> {
   const { name, sshDirectoryPath } = instance;
-  const { state } = await multipassInfo({ name });
+
+  const state = await (async () => {
+    const maxAttempts = 30;
+    for (let i = 0; i < maxAttempts; i++) {
+      try {
+        return (await multipassInfo({ name })).state;
+      } catch (e) {
+        err("Failed obtaining instance state, will retry in 1s", e.message);
+        await delay(1000, { signal: abortSignal });
+      }
+    }
+
+    throw new Error(`Failed obtaining instance state after ${maxAttempts} attempts`);
+  })();
 
   if (state !== InstanceState.Running) {
     throw new Error(
@@ -304,28 +353,32 @@ export async function multipassPostStart(
 
   let ip: string | undefined = undefined;
 
-  if (instance.filterSshIpByCidr) {
-    const maxAttempts = 30;
-    for (let i = 0; i < maxAttempts; i++) {
-      let ipv4: string[] = [];
-
-      try {
-        ipv4 = (await multipassInfo({ name })).ipv4;
-        ip = getSshIp(ipv4, instance.filterSshIpByCidr);
-      } catch (e) {
-        if (i === maxAttempts - 1) {
-          throw e;
+  if (instance.externalNetworkCidr) {
+    ip = await (async () => {
+      const maxAttempts = 30;
+      for (let i = 0; i < maxAttempts; i++) {
+        if (abortSignal.aborted) {
+          throw abortSignal.reason;
         }
 
-        log(
-          "Waiting for the instance's IP that matches the CIDR filter:",
-          instance.filterSshIpByCidr,
-          "So far got:",
-          ipv4.length > 0 ? ipv4.join(", ") : "none",
-        );
-        await delay(1000);
+        let ipv4: string[] = [];
+
+        try {
+          ipv4 = (await multipassInfo({ name })).ipv4;
+          return getSshIp(ipv4, instance.externalNetworkCidr);
+        } catch (_) {
+          log(
+            "Waiting for the instance's IP that matches the CIDR filter:",
+            instance.externalNetworkCidr,
+            "So far got:",
+            ipv4.length > 0 ? ipv4.join(", ") : "none",
+          );
+          await delay(1000, { signal: abortSignal });
+        }
       }
-    }
+
+      throw new Error(`Failed obtaining instance IP after ${maxAttempts} attempts`);
+    })();
   } else {
     ip = getSshIp((await multipassInfo({ name })).ipv4);
   }
@@ -334,9 +387,31 @@ export async function multipassPostStart(
 
   ok("Got instance IP", ip);
 
-  await multipassResolveClusterLocalDns({ ip, instance });
+  await multipassWaitForSshReady({ ip, abortSignal, sshDirectoryPath });
 
-  if (instance.nodeLabels) {
+  if (instance.isBootstrapInstance) {
+    await multipassResolveClusterLocalDns({ ip, instance });
+
+    if (instance.joinMetadataPath) {
+      log("Fetching join token from /var/lib/rancher/k3s/server/node-token over SSH");
+      const joinToken = (await multipassCaptureSsh({
+        cmd: ["sudo", "cat", "/var/lib/rancher/k3s/server/node-token"],
+        sshDirectoryPath,
+        ip,
+      })).out;
+
+      const joinMetadata: JoinMetadata = {
+        url: `https://${ip}:6443`,
+        token: joinToken.trim(),
+      };
+
+      log("Writing join metadata to", cyan(instance.joinMetadataPath));
+      await ensureFile(instance.joinMetadataPath);
+      await Deno.writeTextFile(instance.joinMetadataPath, JSON.stringify(joinMetadata, null, 2));
+    }
+  }
+
+  /* if (instance.nodeLabels) {
     const nodeLabels = Object.entries(instance.nodeLabels).map(([key, value]) => `${key}=${value}`);
 
     log("Adding labels to node:", ...nodeLabels.map((l) => cyan(l)));
@@ -346,9 +421,11 @@ export async function multipassPostStart(
       cmd: ["kubectl", "label", "node", name, "--overwrite", ...nodeLabels],
       tag: gray("[$ kubectl ]"),
     });
-  }
+  } */
 
-  await multipassRoute({ ip, instance });
+  if (instance.isBootstrapInstance) {
+    await multipassRoute({ ip, instance });
+  }
 
   return ip;
 }
@@ -368,22 +445,27 @@ export async function multipassResolveClusterLocalDns(
   await print("Waiting for cni0 network interface to be created...");
 
   try {
-    while (!abortSignal?.aborted) {
-      try {
-        await multipassCaptureSsh({ cmd: ["ip", "link", "show", "cni0"], sshDirectoryPath, ip, abortSignal });
-        break;
-      } catch (e) {
-        if (
-          e instanceof NonZeroExitError &&
-          e.output?.err.includes('Device "cni0" does not exist.')
-        ) {
-          await print(".");
-          await delay(1000);
-        } else {
-          throw e;
+    await (async () => {
+      const maxAttempts = 30;
+      for (let i = 0; i < maxAttempts; i++) {
+        try {
+          await multipassCaptureSsh({ cmd: ["ip", "link", "show", "cni0"], sshDirectoryPath, ip, abortSignal });
+          return;
+        } catch (e) {
+          if (
+            e instanceof NonZeroExitError &&
+            e.output?.err.includes('Device "cni0" does not exist.')
+          ) {
+            await print(".");
+            await delay(1000, { signal: abortSignal });
+          } else {
+            throw e;
+          }
         }
       }
-    }
+
+      throw new Error(`Failed waiting for cni0 after ${maxAttempts} attempts`);
+    })();
   } finally {
     await print("\n");
   }

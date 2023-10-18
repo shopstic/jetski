@@ -11,7 +11,7 @@ export default createCliAction(
       default: false,
     })),
   }),
-  async ({ config: configPath, skipConfirm }) => {
+  async ({ config: configPath, skipConfirm }, _, signal) => {
     const absoluteConfigPath = resolvePath(configPath);
     const instance = await loadInstanceConfig(absoluteConfigPath);
     const { name } = instance;
@@ -28,7 +28,7 @@ export default createCliAction(
     }
 
     await destroyInstance(instance);
-    await createInstance(instance);
+    await createInstance(instance, signal);
 
     return ExitCode.Zero;
   },

@@ -80,13 +80,13 @@ export async function updateKubeconfig(
   ok("Kubeconfig has been updated. The current context should now be", cyan(name));
 }
 
-export async function createInstance(instance: InstanceConfig) {
+export async function createInstance(instance: InstanceConfig, signal: AbortSignal) {
   const { sshDirectoryPath, cpus, memoryGiBs, diskGiBs, image, name, bridged } = instance;
 
   await generateSshKeyPairIfNotExists(instance);
 
   const sshPublicKey = await getSshPublicKey(sshDirectoryPath);
-  const cloudInitConfig = createCloudInitConfig({ sshPublicKey, instance });
+  const cloudInitConfig = await createCloudInitConfig({ sshPublicKey, instance });
   const tempDir = await Deno.makeTempDir();
   const cloudInitFilePath = joinPath(tempDir, "cloud-init.yaml");
   log("Generated cloud-init.yaml");
@@ -163,20 +163,22 @@ export async function createInstance(instance: InstanceConfig) {
     // Ignore
   }
 
-  const ip = await multipassPostStart(instance);
+  const ip = await multipassPostStart(instance, signal);
 
-  await updateKubeconfig({ ip, instance });
+  if (instance.isBootstrapInstance) {
+    await updateKubeconfig({ ip, instance });
+  }
 }
 
 export default createCliAction(
   Type.Object({
     config: InstanceConfigPathSchema,
   }),
-  async ({ config: configPath }) => {
+  async ({ config: configPath }, _, signal) => {
     const absoluteConfigPath = resolvePath(configPath);
     const instance = await loadInstanceConfig(absoluteConfigPath);
 
-    await createInstance(instance);
+    await createInstance(instance, signal);
 
     return ExitCode.Zero;
   },

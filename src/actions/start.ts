@@ -8,7 +8,7 @@ export default createCliAction(
   Type.Object({
     config: InstanceConfigPathSchema,
   }),
-  async ({ config: configPath }) => {
+  async ({ config: configPath }, _, signal) => {
     const absoluteConfigPath = resolvePath(configPath);
     const instance = await loadInstanceConfig(absoluteConfigPath);
     const { name } = instance;
@@ -21,8 +21,11 @@ export default createCliAction(
     }
 
     await multipassStart(instance);
-    const ip = await multipassPostStart(instance);
-    await updateKubeconfig({ ip, instance });
+    const ip = await multipassPostStart(instance, signal);
+
+    if (instance.isBootstrapInstance) {
+      await updateKubeconfig({ ip, instance });
+    }
 
     ok(`Instance '${name}' has been started`);
 

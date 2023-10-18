@@ -8,7 +8,7 @@ export default createCliAction(
   Type.Object({
     config: InstanceConfigPathSchema,
   }),
-  async ({ config: configPath }) => {
+  async ({ config: configPath }, _, signal) => {
     const absoluteConfigPath = resolvePath(configPath);
     const instance = await loadInstanceConfig(absoluteConfigPath);
     const { name } = instance;
@@ -18,7 +18,7 @@ export default createCliAction(
       throw new Error(`Instance '${name}' is not in 'Running' state. Current state is '${state}'`);
     }
 
-    const ip = await multipassPostStart(instance);
+    const ip = await multipassPostStart(instance, signal);
     await updateKubeconfig({ ip, instance });
 
     ok(`Local routes and kubeconfig for instance '${name}' have been updated with IP: ${ip}`);

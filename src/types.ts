@@ -1,28 +1,29 @@
-import { FlexObject, Static, Type } from "./deps.ts";
+import { FlexObject, NonEmptyString, Static, Type } from "./deps/typebox.ts";
 
-export const NonEmptyString = Type.String({ minLength: 1 });
-export const Cidr = Type.String({
+export const Cidr = NonEmptyString({
   format: "regex",
   pattern: "^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))$",
 });
-export const Ipv4 = Type.String({
+export const Ipv4 = NonEmptyString({
   format: "ipv4",
 });
+export const Url = NonEmptyString({ format: "url" });
 
-export const InstanceConfigSchema = Type.Object({
-  name: NonEmptyString,
-  image: Type.Optional(NonEmptyString),
+export const ServerInstanceConfigSchema = Type.Object({
+  name: NonEmptyString(),
+  image: Type.Optional(NonEmptyString()),
   cpus: Type.Number(),
   memoryGiBs: Type.Number(),
   diskGiBs: Type.Number(),
   bridged: Type.Optional(Type.Boolean()),
-  k3sVersion: NonEmptyString,
-  datastoreEndpoint: Type.Optional(NonEmptyString),
-  filterSshIpByCidr: Type.Optional(Cidr),
+  k3sVersion: NonEmptyString(),
+  datastoreEndpoint: Type.Optional(NonEmptyString()),
+  externalNetworkCidr: Type.Optional(Cidr),
+  externalNetworkInterface: Type.Optional(NonEmptyString()),
   clusterCidr: Cidr,
   serviceCidr: Cidr,
   clusterDnsIp: Ipv4,
-  clusterDomain: Type.String({ format: "hostname", minLength: 1 }),
+  clusterDomain: NonEmptyString({ format: "hostname" }),
   kubelet: Type.Optional(Type.Object({
     maxPods: Type.Number(),
   })),
@@ -33,9 +34,33 @@ export const InstanceConfigSchema = Type.Object({
     localStorage: Type.Optional(Type.Boolean()),
     metricsServer: Type.Optional(Type.Boolean()),
   })),
-  nodeLabels: Type.Optional(Type.Record(Type.String(), Type.String())),
-  sshDirectoryPath: NonEmptyString,
+  nodeLabels: Type.Optional(Type.Record(NonEmptyString(), NonEmptyString())),
+  nodeTaints: Type.Optional(Type.Record(NonEmptyString(), NonEmptyString())),
+  sshDirectoryPath: NonEmptyString(),
+  isBootstrapInstance: Type.Optional(Type.Boolean()),
+  joinMetadataPath: Type.Optional(NonEmptyString()),
 });
+
+export const AgentInstanceConfigSchema = Type.Object({
+  name: NonEmptyString(),
+  image: Type.Optional(NonEmptyString()),
+  cpus: Type.Number(),
+  memoryGiBs: Type.Number(),
+  diskGiBs: Type.Number(),
+  bridged: Type.Optional(Type.Boolean()),
+  k3sVersion: NonEmptyString(),
+  filterSshIpByCidr: Type.Optional(Cidr),
+  nodeLabels: Type.Optional(Type.Record(NonEmptyString(), NonEmptyString())),
+  sshDirectoryPath: NonEmptyString(),
+  joinMetadataPath: NonEmptyString(),
+});
+
+export const JoinMetadataSchema = Type.Object({
+  url: NonEmptyString({ format: "uri" }),
+  token: NonEmptyString(),
+});
+
+export type JoinMetadata = Static<typeof JoinMetadataSchema>;
 
 export enum InstanceState {
   Starting = "Starting",
@@ -47,7 +72,7 @@ export enum InstanceState {
 
 export const MultipassInfo = FlexObject({
   info: Type.Record(
-    Type.String(),
+    NonEmptyString(),
     FlexObject({
       ipv4: Type.Array(Ipv4),
       state: Type.Enum(InstanceState),
@@ -55,7 +80,11 @@ export const MultipassInfo = FlexObject({
   ),
 });
 
-export type InstanceConfig = Static<typeof InstanceConfigSchema>;
+export type ServerInstanceConfig = Static<typeof ServerInstanceConfigSchema>;
+export type AgentInstanceConfig = Static<typeof AgentInstanceConfigSchema>;
+
+// Backwards compatibility
+export type InstanceConfig = ServerInstanceConfig;
 
 export const InstanceConfigPathSchema = Type.String({
   minLength: 1,

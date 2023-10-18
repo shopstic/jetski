@@ -1,7 +1,7 @@
-import { InstanceConfig } from "../src/types.ts";
+import { ServerInstanceConfig } from "../../src/types.ts";
 
 export default {
-  name: "jetski-example",
+  name: "jetski-single-node",
   image: "22.04",
   cpus: 1,
   memoryGiBs: 2,
@@ -11,8 +11,8 @@ export default {
   serviceCidr: "10.254.255.0/24",
   clusterDnsIp: "10.254.255.10",
   clusterDomain: "jetski.local",
-  bridged: true,
-  filterSshIpByCidr: "192.168.2.0/24",
+  bridged: Boolean(Deno.env.get("JETSKI_INSTANCE_BRIDGED")),
+  externalNetworkCidr: Deno.env.get("JETSKI_INSTANCE_FILTER_SSH_IP_BY_CIDR"),
   disableComponents: {
     traefik: true,
     metricsServer: true
@@ -21,9 +21,9 @@ export default {
     "com.jetski/foo": "bar",
     "com.jetski/baz": "boo",
   },
-  sshDirectoryPath: "./local/.ssh",
+  sshDirectoryPath: "./.ssh",
   // datastoreEndpoint: "http://192.168.2.22:2379"
   kubelet: {
     maxPods: 500
   }
-} as InstanceConfig;
+} satisfies ServerInstanceConfig;

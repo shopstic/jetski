@@ -18,9 +18,11 @@ export default createCliAction(
       throw new Error(`Instance '${name}' is not in 'Running' state. Current state is '${state}'`);
     }
 
-    const ip = getSshIp(ipv4, instance.filterSshIpByCidr);
+    const ip = getSshIp(ipv4, instance.externalNetworkCidr);
 
-    await multipassUnroute({ ip, instance });
+    if (instance.isBootstrapInstance) {
+      await multipassUnroute({ ip, instance });
+    }
     await multipassK3sKillAll({ ip, sshDirectoryPath });
     await multipassStop(instance);
 

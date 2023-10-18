@@ -19,10 +19,13 @@ export default createCliAction(
       throw new Error(`Instance '${name}' is not in 'Running' state. Current state is '${state}'`);
     }
 
+    const ip = getSshIp(ipv4, instance.externalNetworkCidr);
+    log(gray(`Instance IP is '${ip}'`));
+
     const exitCode = await multipassSshInteractive({
       cmd: unparsedArgs,
       sshDirectoryPath,
-      ip: getSshIp(ipv4, instance.filterSshIpByCidr),
+      ip: getSshIp(ipv4, instance.externalNetworkCidr),
     });
 
     return new ExitCode(exitCode);
