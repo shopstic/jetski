@@ -38,6 +38,9 @@
               "nix.enableLanguageServer" = true;
               "nix.formatterPath" = pkgs.nixpkgs-fmt + "/bin/nixpkgs-fmt";
               "nix.serverPath" = pkgs.rnix-lsp + "/bin/rnix-lsp";
+              "powershell.powerShellAdditionalExePaths" = {
+                "PowerShell Core" = "${pkgs.powershell}/bin/pwsh";
+              };
             };
           };
           jetski = pkgs.callPackage hotPot.lib.denoAppBuild
@@ -61,6 +64,7 @@
               inherit deno;
               inherit (pkgs)
                 kubectl
+                powershell
                 ;
             };
         in

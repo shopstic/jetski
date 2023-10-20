@@ -40,6 +40,8 @@ export const ServerInstanceConfigSchema = Type.Object({
   nodeTaints: Type.Optional(Type.Record(NonEmptyString(), NonEmptyString())),
   sshDirectoryPath: NonEmptyString(),
   joinMetadataPath: Type.Optional(NonEmptyString()),
+  userName: Type.Optional(NonEmptyString()),
+  userPassword: Type.Optional(NonEmptyString()),
 });
 
 export const AgentInstanceConfigSchema = Type.Object({
@@ -61,6 +63,8 @@ export const AgentInstanceConfigSchema = Type.Object({
   nodeTaints: Type.Optional(Type.Record(NonEmptyString(), NonEmptyString())),
   sshDirectoryPath: NonEmptyString(),
   joinMetadataPath: NonEmptyString(),
+  userName: Type.Optional(NonEmptyString()),
+  userPassword: Type.Optional(NonEmptyString()),
 });
 
 export const InstanceConfigSchema = Type.Union([

@@ -2,6 +2,14 @@ import { dirname, green, printErrLines, printOutLines, resolvePath, validate } f
 import { fsExists, gray, inheritExec, joinPath, red, stringifyYaml } from "./deps.ts";
 import { InstanceConfig, InstanceConfigSchema, JoinMetadataSchema } from "./types.ts";
 
+export function stripMargin(template: TemplateStringsArray, ...expressions: unknown[]) {
+  const result = template.reduce((accumulator, part, i) => {
+    return accumulator + expressions[i - 1] + part;
+  });
+
+  return result.replace(/(\n|\r|\r\n)\s*\|/g, "$1");
+}
+
 export async function loadInstanceConfig(
   instancePath: string,
 ): Promise<InstanceConfig> {
@@ -118,7 +126,16 @@ export async function createCloudInitConfig(
     }
   })();
 
-  const { kubelet, externalNetworkInterface, nodeLabels, nodeTaints, clusterDomain, k3sVersion } = instance;
+  const {
+    userName = "ubuntu",
+    userPassword,
+    kubelet,
+    externalNetworkInterface,
+    nodeLabels,
+    nodeTaints,
+    clusterDomain,
+    k3sVersion,
+  } = instance;
 
   let k3sConfig: Record<string, unknown>;
 
@@ -165,16 +182,29 @@ export async function createCloudInitConfig(
     users: [
       "default",
       {
-        name: "ubuntu",
-        gecos: "Ubuntu",
+        name: userName,
         sudo: "ALL=(ALL) NOPASSWD:ALL",
-        groups: "users, admin",
+        groups: ["users", "admin", "sudo"],
         shell: "/bin/bash",
         ssh_import_id: "None",
-        lock_passwd: true,
+        lock_passwd: userPassword === undefined,
         ssh_authorized_keys: [sshPublicKey],
       },
     ],
+    system_info: {
+      default_user: {
+        name: userName,
+        home: `/home/${userName}`,
+      },
+    },
+    ...(userPassword !== undefined)
+      ? {
+        password: userPassword,
+        chpasswd: {
+          expire: false,
+        },
+      }
+      : {},
     write_files: [
       {
         owner: "root:root",
@@ -214,36 +244,73 @@ export async function createCloudInitConfig(
           }),
         }]
         : []),
+      {
+        owner: "root:root",
+        path: "/usr/bin/make_eth0_ip_static.sh",
+        permissions: "0755",
+        content: stripMargin`#!/usr/bin/env bash
+        |set -euo pipefail
+        |
+        |current_ip_cidr=$(ip -brief address show eth0 | awk '{print $3}') || exit $?
+        |echo "Current IP CIDR: $current_ip_cidr"
+        |
+        |mkdir -p /etc/netplan
+        |cat > /etc/netplan/99-netcfg-static.yaml <<EOL
+        |network:
+        |  version: 2
+        |  ethernets:
+        |    default:
+        |      addresses:
+        |        - $current_ip_cidr
+        |EOL
+        |
+        |cat /etc/netplan/99-netcfg-static.yaml
+        |netplan apply
+        |
+        |echo "Waiting for network to come back up..."
+        |while ! ping -c 1 -W 1 8.8.8.8; do
+        |  sleep 1
+        |  echo "Still waiting for network to come back up..."
+        |done
+        `,
+      },
+      ...externalNetworkInterface
+        ? [{
+          owner: "root:root",
+          path: "/usr/bin/determine_node_external_ip.sh",
+          permissions: "0755",
+          content: stripMargin`#!/usr/bin/env bash
+          |set -euo pipefail
+          |
+          |operstate_file="/sys/class/net/${externalNetworkInterface}/operstate"
+          |timeout=15
+          |elapsed_time=0
+          |
+          |while true; do
+          |  if [[ $(cat "$operstate_file") == "up" ]]; then
+          |    break
+          |  fi
+          |  
+          |  if [[ $elapsed_time -ge $timeout ]]; then
+          |    echo "Timed out waiting for $interface to be up."
+          |    exit 1
+          |  fi
+          |  
+          |  echo "Waiting for $interface to be up..."
+          |  sleep 1
+          |  ((elapsed_time++))
+          |done
+          |
+          |ip_address=$(ip -brief address show eth1 | awk '{print $3}' | awk -F/ '{print $1}')
+          |echo "$ip_address" > /etc/node-external-ip
+          `,
+        }]
+        : [],
     ],
     runcmd: [
       "sysctl -p /etc/sysctl.d/98-inotify.conf",
-      ...externalNetworkInterface
-        ? [`cat << 'EOF' | bash
-set -euo pipefail
-operstate_file="/sys/class/net/${externalNetworkInterface}/operstate"
-timeout=15
-elapsed_time=0
-
-while true; do
-  if [[ $(cat "$operstate_file") == "up" ]]; then
-    break
-  fi
-  
-  if [[ $elapsed_time -ge $timeout ]]; then
-    echo "Timed out waiting for $interface to be up."
-    exit 1
-  fi
-  
-  echo "Waiting for $interface to be up..."
-  sleep 1
-  ((elapsed_time++))
-done
-
-ip_address=$(ip -brief address show eth1 | awk '{print $3}' | awk -F/ '{print $1}')
-echo "$ip_address" > /etc/node-external-ip
-EOF
-`]
-        : [],
+      "/usr/bin/make_eth0_ip_static.sh",
+      ...externalNetworkInterface ? ["/usr/bin/determine_node_external_ip.sh"] : [],
       `curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=${k3sVersion} ${
         kubelet ? 'INSTALL_K3S_EXEC="--kubelet-arg=config=/etc/rancher/k3s/kubelet-config.yaml"' : ""
       } ${
