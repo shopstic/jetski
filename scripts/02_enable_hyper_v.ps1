@@ -1,0 +1,1 @@
+Enable-WindowsOptionalFeature -NoRestart -Online -FeatureName Microsoft-Hyper-V -All

@@ -22,9 +22,9 @@ export default {
   bridged,
   name: "jetski-multi-node-two",
   image: "22.04",
-  cpus: 1,
-  memoryGiBs: 2,
-  diskGiBs: 5,
+  cpus: 15,
+  memoryGiBs: 26,
+  diskGiBs: 200,
   nodeLabels: {
     "com.jetski/foo": "bar",
     "com.jetski/baz": "boo",
