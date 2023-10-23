@@ -1,7 +1,7 @@
 import { createCliAction, ExitCode, resolvePath, Type } from "../deps.ts";
 import { multipassInfo, multipassPostStart } from "../multipass.ts";
 import { InstanceConfigPathSchema, InstanceState } from "../types.ts";
-import { loadInstanceConfig, ok } from "../utils.ts";
+import { err, loadInstanceConfig, ok } from "../utils.ts";
 import { updateKubeconfig } from "./create.ts";
 
 export default createCliAction(
@@ -11,6 +11,12 @@ export default createCliAction(
   async ({ config: configPath }, _, signal) => {
     const absoluteConfigPath = resolvePath(configPath);
     const instance = await loadInstanceConfig(absoluteConfigPath);
+
+    if (instance.role !== "server") {
+      err("Expected a instance with role server, instead got", instance.role, "with name", instance.name);
+      return ExitCode.One;
+    }
+
     const { name } = instance;
     const { state } = await multipassInfo({ name });
 

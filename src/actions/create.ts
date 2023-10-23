@@ -19,7 +19,7 @@ import {
   multipassTailCloudInitOutputLog,
   multipassWaitForState,
 } from "../multipass.ts";
-import { InstanceConfig, InstanceConfigPathSchema, InstanceState } from "../types.ts";
+import { InstanceConfig, InstanceConfigPathSchema, InstanceState, ServerInstanceConfig } from "../types.ts";
 import {
   createCloudInitConfig,
   err,
@@ -31,9 +31,10 @@ import {
 } from "../utils.ts";
 
 export async function updateKubeconfig(
-  { ip, instance }: { ip: string; instance: InstanceConfig },
+  { ip, instance }: { ip: string; instance: ServerInstanceConfig },
 ) {
-  const { name, sshDirectoryPath } = instance;
+  const { name: instanceName, contextName = instanceName, sshDirectoryPath } = instance;
+
   log(
     "Fetching instance's kubeconfig from /etc/rancher/k3s/k3s.yaml over SSH",
   );
@@ -47,12 +48,12 @@ export async function updateKubeconfig(
   ) as any;
 
   kubeconfig.clusters[0].cluster.server = `https://${ip}:6443`;
-  kubeconfig.clusters[0].name = name;
-  kubeconfig.contexts[0].context.cluster = name;
-  kubeconfig.contexts[0].context.user = name;
-  kubeconfig.contexts[0].name = name;
-  kubeconfig["current-context"] = name;
-  kubeconfig.users[0].name = name;
+  kubeconfig.clusters[0].name = contextName;
+  kubeconfig.contexts[0].context.cluster = contextName;
+  kubeconfig.contexts[0].context.user = contextName;
+  kubeconfig.contexts[0].name = contextName;
+  kubeconfig["current-context"] = contextName;
+  kubeconfig.users[0].name = contextName;
 
   const tempDir = await Deno.makeTempDir();
   const tempKubeConfigFile = joinPath(tempDir, "kubeconfig.yaml");
@@ -77,7 +78,7 @@ export async function updateKubeconfig(
 
   await Deno.writeTextFile(kubeConfigFile, newKubeConfig);
 
-  ok("Kubeconfig has been updated. The current context should now be", cyan(name));
+  ok("Kubeconfig has been updated. The current context should now be", cyan(contextName));
 }
 
 export async function createInstance(instance: InstanceConfig, signal: AbortSignal) {

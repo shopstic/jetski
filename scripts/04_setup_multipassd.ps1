@@ -1,14 +1,19 @@
 Set-StrictMode -Version 2
 $ErrorActionPreference = 'Stop'
 
-try {
-  New-VMSwitch -name MultipassSwitch -NetAdapterName Ethernet -AllowManagementOS $true
-}
-catch {
-  if ($_.Exception.Message -notmatch "already bound") {
-    Write-Output $_
-    exit 1
+if (-not (Get-Command multipass.exe -ErrorAction SilentlyContinue)) {
+  $url = "https://multipass.run/download/windows"
+  $dirPath = "C:\Temp"
+  if (-Not (Test-Path $dirPath)) {
+    New-Item -ItemType Directory -Path $dirPath
   }
+  $filePath = "$dirPath\Multipass-Installer.exe"
+  Write-Output "Downloading Multipass from $url to $filePath"
+  Invoke-WebRequest -Uri $url -OutFile $filePath
+  # Install Multipass silently
+  Write-Output "Installing Multipass from $filePath"
+  Start-Process -FilePath $filePath -Args "/S" -Wait
+  Write-Output "Installed Multipass"
 }
 
 $hostname = $env:COMPUTERNAME.ToLower()
@@ -76,42 +81,42 @@ function Wait-ForMultipassd {
 
 Wait-ForMultipassd
 
-# Write-Output "Setting local.passphrase"
-# multipass.exe set local.passphrase=foo
-# if ($LASTEXITCODE -ne 0) {
-#   Write-Output "Failed to set local.passphrase"
-#   exit $LASTEXITCODE
-# }
+Write-Output "Setting local.passphrase"
+multipass.exe set local.passphrase=foo
+if ($LASTEXITCODE -ne 0) {
+  Write-Output "Failed to set local.passphrase"
+  exit $LASTEXITCODE
+}
 
-# Wait-ForMultipassd
-# Write-Output "Setting local.bridged-network"
-# multipass.exe set local.bridged-network=MultipassSwitch
-# if ($LASTEXITCODE -ne 0) {
-#   Write-Output "Failed to set local.bridged-network"
-#   exit $LASTEXITCODE
-# }
+Wait-ForMultipassd
+Write-Output "Setting local.bridged-network"
+multipass.exe set local.bridged-network=MultipassSwitch
+if ($LASTEXITCODE -ne 0) {
+  Write-Output "Failed to set local.bridged-network"
+  exit $LASTEXITCODE
+}
 
-# # # Wait-ForMultipassd
-# Write-Output "Getting ethernet IP"
-# try {
-#   $ethIp = (Get-NetIPAddress -InterfaceAlias "vEthernet (MultipassSwitch)" -AddressFamily IPv4).IPAddress
-# }
-# catch {
-#   Write-Output "Failed to get ethernet IP"
-#   Write-Output $_
-#   exit 1
-# }
+# # Wait-ForMultipassd
+Write-Output "Getting ethernet IP"
+try {
+  $ethIp = (Get-NetIPAddress -InterfaceAlias "vEthernet (MultipassSwitch)" -AddressFamily IPv4).IPAddress
+}
+catch {
+  Write-Output "Failed to get ethernet IP"
+  Write-Output $_
+  exit 1
+}
 
-# Write-Output "Found ethernet IP: $ethIp"
+Write-Output "Found ethernet IP: $ethIp"
 
-# Write-Output "Going to add portproxy rule for $($ethIp):$($multipassdPort)"
-# netsh interface portproxy add v4tov4 listenport=$multipassdPort listenaddress=$ethIp connectport=$multipassdPort connectaddress=127.0.0.1
-# if ($LASTEXITCODE -ne 0) {
-#   exit $LASTEXITCODE
-# }
+Write-Output "Going to add portproxy rule for $($ethIp):$($multipassdPort)"
+netsh interface portproxy add v4tov4 listenport=$multipassdPort listenaddress=$ethIp connectport=$multipassdPort connectaddress=127.0.0.1
+if ($LASTEXITCODE -ne 0) {
+  exit $LASTEXITCODE
+}
 
-# Write-Output "Going to add firewall rule for $($ethIp):$($multipassdPort)"
-# New-NetFirewallRule -DisplayName "multipassd_51000" -Direction Inbound -Protocol TCP -LocalPort $multipassdPort -Action Allow -PolicyStore PersistentStore
-# if ($LASTEXITCODE -ne 0) {
-#   exit $LASTEXITCODE
-# }
+Write-Output "Going to add firewall rule for $($ethIp):$($multipassdPort)"
+New-NetFirewallRule -DisplayName "multipassd_51000" -Direction Inbound -Protocol TCP -LocalPort $multipassdPort -Action Allow -PolicyStore PersistentStore
+if ($LASTEXITCODE -ne 0) {
+  exit $LASTEXITCODE
+}

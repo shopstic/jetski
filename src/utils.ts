@@ -246,13 +246,22 @@ export async function createCloudInitConfig(
         : []),
       {
         owner: "root:root",
-        path: "/usr/bin/make_eth0_ip_static.sh",
+        path: "/usr/bin/pin_ip_addresses.sh",
         permissions: "0755",
         content: stripMargin`#!/usr/bin/env bash
         |set -euo pipefail
         |
-        |current_ip_cidr=$(ip -brief address show eth0 | awk '{print $3}') || exit $?
-        |echo "Current IP CIDR: $current_ip_cidr"
+        |eth0_ip=$(ip -brief address show eth0 | awk '{print $3}') || exit $?
+        |echo "Current eth0 CIDR: $eth0_ip"
+        |
+        |${
+          externalNetworkInterface
+            ? stripMargin`
+        |${externalNetworkInterface}_ip=$(ip -brief address show ${externalNetworkInterface} | awk '{print $3}') || exit $?
+        |echo "Current ${externalNetworkInterface} CIDR: $${externalNetworkInterface}_ip"
+        |`
+            : ""
+        }
         |
         |mkdir -p /etc/netplan
         |cat > /etc/netplan/99-netcfg-static.yaml <<EOL
@@ -261,7 +270,16 @@ export async function createCloudInitConfig(
         |  ethernets:
         |    default:
         |      addresses:
-        |        - $current_ip_cidr
+        |        - $eth0_ip
+        |    ${
+          externalNetworkInterface
+            ? stripMargin`
+        |    extra0:
+        |      addresses:
+        |        - $${externalNetworkInterface}_ip
+        |`
+            : ""
+        }
         |EOL
         |
         |cat /etc/netplan/99-netcfg-static.yaml
@@ -309,7 +327,7 @@ export async function createCloudInitConfig(
     ],
     runcmd: [
       "sysctl -p /etc/sysctl.d/98-inotify.conf",
-      "/usr/bin/make_eth0_ip_static.sh",
+      "/usr/bin/pin_ip_addresses.sh",
       ...externalNetworkInterface ? ["/usr/bin/determine_node_external_ip.sh"] : [],
       `curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=${k3sVersion} ${
         kubelet ? 'INSTALL_K3S_EXEC="--kubelet-arg=config=/etc/rancher/k3s/kubelet-config.yaml"' : ""

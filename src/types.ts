@@ -13,6 +13,7 @@ export const Url = NonEmptyString({ format: "url" });
 export const ServerInstanceConfigSchema = Type.Object({
   role: Type.Literal("server"),
   name: NonEmptyString(),
+  contextName: Type.Optional(NonEmptyString()),
   image: Type.Optional(NonEmptyString()),
   cpus: PosInt(),
   memoryGiBs: PosInt(),

@@ -1,6 +1,6 @@
 /.vscode
 /.zsh_history
-.ssh
 .secrets
+.ssh
 /result
 /.env

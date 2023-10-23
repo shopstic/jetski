@@ -1,9 +1,9 @@
 import { AgentInstanceConfig } from "../../src/types.ts";
-import agentInstanceConfig from "./multi-two.ts";
+import agentInstanceConfig from "./multi-2.ts";
 
 export default {
   ...agentInstanceConfig,
-  name: "jetski-multi-node-three",
+  name: "jetski-multi-node-4",
   nodeLabels: {
     "com.jetski/foo": "something",
     "com.jetski/baz": "else",
