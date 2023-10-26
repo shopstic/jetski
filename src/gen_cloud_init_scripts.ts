@@ -4,7 +4,7 @@ const currentScriptDir = dirname(fromFileUrl(import.meta.url));
 
 const scripts: Record<string, string> = {};
 
-const scriptsDir = joinPath(currentScriptDir, "../cloud_init_scripts");
+const scriptsDir = joinPath(currentScriptDir, "../scripts/cloud_init");
 for await (const file of Deno.readDir(scriptsDir)) {
   if (file.isFile && extname(file.name) === ".sh") {
     scripts[file.name] = await Deno.readTextFile(joinPath(scriptsDir, file.name));
