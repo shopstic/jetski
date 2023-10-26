@@ -1,6 +1,7 @@
 # Disable taskbar widgets
 reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" /v "TaskbarDa" /t REG_DWORD /d 0 /f
 Stop-Service 'WSearch'; Set-Service -Name 'WSearch' -StartupType 'Disabled'
+Stop-Service 'SysMain'; Set-Service -Name 'SysMain' -StartupType 'Disabled'
 
 Get-NetAdapter -Name "*Wi-FI*" | Disable-NetAdapter -Confirm:$false
 Get-PnpDevice | Where-Object {$_.Class -eq 'Bluetooth' -and $_.Name -like '*Wireless Bluetooth*'} | ForEach-Object { Disable-PnpDevice -InstanceId $_.DeviceID -Confirm:$false }

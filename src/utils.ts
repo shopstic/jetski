@@ -1,6 +1,7 @@
 import { dirname, green, printErrLines, printOutLines, resolvePath, validate } from "./deps.ts";
 import { fsExists, gray, inheritExec, joinPath, red, stringifyYaml } from "./deps.ts";
 import { InstanceConfig, InstanceConfigSchema, JoinMetadataSchema } from "./types.ts";
+import cloudInitScripts from "./cloud_init_scripts.json" with { type: "json" };
 
 export function stripMargin(template: TemplateStringsArray, ...expressions: unknown[]) {
   const result = template.reduce((accumulator, part, i) => {
@@ -130,7 +131,6 @@ export async function createCloudInitConfig(
     userName = "ubuntu",
     userPassword,
     kubelet,
-    externalNetworkInterface,
     nodeLabels,
     nodeTaints,
     clusterDomain,
@@ -244,102 +244,25 @@ export async function createCloudInitConfig(
           }),
         }]
         : []),
-      {
+      ...Object.entries(cloudInitScripts).map(([name, content]) => ({
         owner: "root:root",
-        path: "/usr/bin/pin_ip_addresses.sh",
+        path: `/usr/bin/${name}`,
         permissions: "0755",
-        content: stripMargin`#!/usr/bin/env bash
-        |set -euo pipefail
-        |
-        |eth0_ip=$(ip -brief address show eth0 | awk '{print $3}') || exit $?
-        |echo "Current eth0 CIDR: $eth0_ip"
-        |
-        |${
-          externalNetworkInterface
-            ? stripMargin`
-        |${externalNetworkInterface}_ip=$(ip -brief address show ${externalNetworkInterface} | awk '{print $3}') || exit $?
-        |echo "Current ${externalNetworkInterface} CIDR: $${externalNetworkInterface}_ip"
-        |`
-            : ""
-        }
-        |
-        |mkdir -p /etc/netplan
-        |cat > /etc/netplan/99-netcfg-static.yaml <<EOL
-        |network:
-        |  version: 2
-        |  ethernets:
-        |    default:
-        |      addresses:
-        |        - $eth0_ip
-        |    ${
-          externalNetworkInterface
-            ? stripMargin`
-        |    extra0:
-        |      addresses:
-        |        - $${externalNetworkInterface}_ip
-        |`
-            : ""
-        }
-        |EOL
-        |
-        |cat /etc/netplan/99-netcfg-static.yaml
-        |netplan apply
-        |
-        |echo "Waiting for network to come back up..."
-        |while ! ping -c 1 -W 1 8.8.8.8; do
-        |  sleep 1
-        |  echo "Still waiting for network to come back up..."
-        |done
-        `,
-      },
-      ...externalNetworkInterface
-        ? [{
-          owner: "root:root",
-          path: "/usr/bin/determine_node_external_ip.sh",
-          permissions: "0755",
-          content: stripMargin`#!/usr/bin/env bash
-          |set -euo pipefail
-          |
-          |operstate_file="/sys/class/net/${externalNetworkInterface}/operstate"
-          |timeout=15
-          |elapsed_time=0
-          |
-          |while true; do
-          |  if [[ $(cat "$operstate_file") == "up" ]]; then
-          |    break
-          |  fi
-          |  
-          |  if [[ $elapsed_time -ge $timeout ]]; then
-          |    echo "Timed out waiting for $interface to be up."
-          |    exit 1
-          |  fi
-          |  
-          |  echo "Waiting for $interface to be up..."
-          |  sleep 1
-          |  ((elapsed_time++))
-          |done
-          |
-          |ip_address=$(ip -brief address show eth1 | awk '{print $3}' | awk -F/ '{print $1}')
-          |echo "$ip_address" > /etc/node-external-ip
-          `,
-        }]
-        : [],
+        content,
+      })),
     ],
     runcmd: [
       "sysctl -p /etc/sysctl.d/98-inotify.conf",
       "/usr/bin/pin_ip_addresses.sh",
-      ...externalNetworkInterface ? ["/usr/bin/determine_node_external_ip.sh"] : [],
       `curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=${k3sVersion} ${
         kubelet ? 'INSTALL_K3S_EXEC="--kubelet-arg=config=/etc/rancher/k3s/kubelet-config.yaml"' : ""
       } ${
         joinMetadata
           ? `K3S_TOKEN=${JSON.stringify(joinMetadata.token)} K3S_URL=${JSON.stringify(joinMetadata.url)}`
           : ""
-      } sh -s - ${joinMetadata ? "agent" : "server"} ${
-        externalNetworkInterface
-          ? `--node-ip=$(cat /etc/node-external-ip) --flannel-iface=${externalNetworkInterface}`
-          : ""
-      }`,
+      } sh -s - ${
+        joinMetadata ? "agent" : "server"
+      } --node-ip=$(cat /etc/node-external-ip) --flannel-iface=$(cat /etc/node-external-iface)`,
     ],
     package_update: false,
   };

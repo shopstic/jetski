@@ -6,7 +6,7 @@ export default {
   image: "22.04",
   cpus: 15,
   memoryGiBs: 56,
-  diskGiBs: 200,
+  diskGiBs: 100,
   k3sVersion: "v1.24.17+k3s1",
   clusterCidr: "10.254.254.0/24",
   serviceCidr: "10.254.255.0/24",

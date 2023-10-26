@@ -90,9 +90,10 @@ export async function multipassInfo(
       if (e instanceof ExecAbortedError) {
         throw new Error(
           `Timed out waiting for 'multipass info ...' command to respond after ${timeoutMs}ms. Perhaps the multipassd daemon hung?`,
+          e,
         );
       } else if (e instanceof NonZeroExitError) {
-        throw new Error(`Command 'multipass info ...' failed`);
+        throw new Error(`Command 'multipass info ...' failed: ${e.output?.err}}`, e);
       }
       throw e;
     } finally {
@@ -276,10 +277,13 @@ export async function multipassWaitForState(
   while (!abortSignal.aborted) {
     const ready = await (async () => {
       try {
-        const { state } = await multipassInfo({ name: instance.name, ignoreStderr: true });
+        const { state } = await multipassInfo({ name: instance.name, ignoreStderr: true, timeoutMs: 30_000 });
 
         return isReady(state);
-      } catch {
+      } catch (e) {
+        if (e instanceof Error && e.cause instanceof ExecAbortedError) {
+          throw e;
+        }
         return false;
       }
     })();
@@ -433,6 +437,10 @@ export async function multipassResolveClusterLocalDns(
       const maxAttempts = 30;
       for (let i = 0; i < maxAttempts; i++) {
         try {
+          if (abortSignal?.aborted) {
+            throw abortSignal.reason;
+          }
+
           await multipassCaptureSsh({ cmd: ["ip", "link", "show", "cni0"], sshDirectoryPath, ip, abortSignal });
           return;
         } catch (e) {
