@@ -20,8 +20,7 @@ export async function destroyInstance(instance: InstanceConfig) {
     await multipassStop(instance);
   }
 
-  await multipass({ command: "delete", args: [name] });
-  await multipass({ command: "purge", args: [] });
+  await multipass({ command: "delete", args: ["--purge", name] });
 
   ok(`Instance '${name}' has been destroyed`);
 }

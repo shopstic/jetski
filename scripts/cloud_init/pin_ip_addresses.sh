@@ -24,6 +24,8 @@ network:
   ethernets:
 EOF
 
+chmod 0700 /etc/netplan/*
+
 lastIp=""
 lastIface=""
 lastName=""

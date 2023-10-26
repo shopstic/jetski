@@ -135,12 +135,31 @@ export async function createInstance(instance: InstanceConfig, signal: AbortSign
       stdout: {
         async read(readable: ReadableStream<Uint8Array>) {
           try {
-            await readable.pipeTo(Deno.stdout.writable, {
-              preventClose: true,
-              preventAbort: true,
-              preventCancel: true,
-              signal: multipassLaunchStdoutAbort.signal,
-            });
+            await readable
+              .pipeThrough(
+                new TransformStream<Uint8Array, string>({
+                  transform(chunk: Uint8Array, controller: TransformStreamDefaultController<string>) {
+                    const output = new TextDecoder().decode(chunk).replaceAll(
+                      "[2K[0A[0E[2K[0A[0E",
+                      "\n" + gray("[$ multipass ]") + " ",
+                    ).replace(
+                      /(\/|-|\\|\|)/g,
+                      ".",
+                    );
+                    controller.enqueue(output);
+                  },
+                }),
+              )
+              .pipeThrough(new TextEncoderStream())
+              .pipeTo(
+                Deno.stdout.writable,
+                {
+                  preventClose: true,
+                  preventAbort: true,
+                  preventCancel: true,
+                  signal: multipassLaunchStdoutAbort.signal,
+                },
+              );
           } catch (e) {
             if (multipassLaunchStdoutAbort.signal.aborted) {
               return;

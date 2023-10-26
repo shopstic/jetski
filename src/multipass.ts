@@ -263,8 +263,7 @@ export async function multipassStart({ name }: { name: string }) {
 }
 
 export async function multipassDelete(name: string) {
-  await multipass({ command: "delete", args: [name] });
-  await multipass({ command: "purge", args: [] });
+  await multipass({ command: "delete", args: ["--purge", name] });
 }
 
 export async function multipassWaitForState(
