@@ -6,7 +6,7 @@ set -euo pipefail
 BR_INTERFACE="enp2s0"
 BR_STATIC_ADDRESS="10.255.250.6/21"
 BR_DEFAULT_GATEWAY="10.255.248.1"
-DR_NAMESERVER="127.0.0.53"
+BR_NAMESERVER="127.0.0.53"
 
 cat >/etc/netplan/99-multipass-bridge.yaml <<EOF
 network:
@@ -22,7 +22,7 @@ network:
         - to: default
           via: $BR_DEFAULT_GATEWAY
       nameservers:
-        addresses: [$DR_NAMESERVER]
+        addresses: [$BR_NAMESERVER]
       parameters:
         forward-delay: 0
         stp: false
