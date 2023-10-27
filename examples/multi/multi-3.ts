@@ -1,11 +1,13 @@
-import { AgentInstanceConfig } from "../../src/types.ts";
-import agentInstanceConfig from "./multi-2.ts";
+import { ServerInstanceConfig } from "../../src/types.ts";
+import serverInstanceConfig from "./multi-1.ts";
 
 export default {
-  ...agentInstanceConfig,
+  ...serverInstanceConfig,
+  clusterInit: false,
   name: "jetski-multi-node-3",
-  nodeLabels: {
-    "com.jetski/foo": "something",
-    "com.jetski/baz": "else",
+  keepalived: {
+    ...serverInstanceConfig.keepalived,
+    state: "BACKUP",
+    priority: 253,
   },
-} satisfies AgentInstanceConfig;
+} satisfies ServerInstanceConfig;

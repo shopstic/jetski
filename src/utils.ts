@@ -107,7 +107,7 @@ export async function createCloudInitConfig(
 ) {
   const joinMetadata = await (async () => {
     try {
-      if (instance.role === "agent") {
+      if (instance.role === "agent" || (instance.role === "server" && !instance.clusterInit)) {
         const content = JSON.parse(await Deno.readTextFile(instance.joinMetadataPath));
         const result = validate(JoinMetadataSchema, content);
 
@@ -178,6 +178,27 @@ export async function createCloudInitConfig(
     };
   }
 
+  let k3sCommand: string;
+
+  if (instance.role === "agent") {
+    k3sCommand = [
+      joinMetadata ? `K3S_TOKEN=${JSON.stringify(joinMetadata.token)} K3S_URL=${JSON.stringify(joinMetadata.url)}` : "",
+      `sh -s - agent --node-ip="$(cat /etc/node-external-ip)" --flannel-iface="$(cat /etc/node-external-iface)"`,
+    ].join(" ");
+  } else {
+    k3sCommand = [
+      joinMetadata ? `K3S_TOKEN=${JSON.stringify(joinMetadata.token)}` : "",
+      "sh -s - server",
+      instance.clusterInit
+        ? `--cluster-init --tls-san="${
+          instance.keepalived ? instance.keepalived.virtualIp : "$(cat /etc/node-external-ip)"
+        }"`
+        : "",
+      joinMetadata ? `--server=${JSON.stringify(joinMetadata.url)}` : "",
+      `--node-ip="$(cat /etc/node-external-ip)" --flannel-iface="$(cat /etc/node-external-iface)"`,
+    ].join(" ");
+  }
+
   return {
     users: [
       "default",
@@ -240,7 +261,7 @@ export async function createCloudInitConfig(
           content: stringifyYaml({
             apiVersion: "kubelet.config.k8s.io/v1beta1",
             kind: "KubeletConfiguration",
-            maxPods: kubelet.maxPods,
+            ...kubelet,
           }),
         }]
         : []),
@@ -250,28 +271,59 @@ export async function createCloudInitConfig(
         permissions: "0755",
         content,
       })),
+      ...(instance.role === "server" && instance.keepalived
+        ? [{
+          owner: "root:root",
+          path: "/usr/bin/setup_keepalived.sh",
+          permissions: "0755",
+          content: stripMargin`#!/usr/bin/env bash
+            |set -euo pipefail
+            |iface=$(cat /etc/node-external-iface) || exit $?
+            |apt install -y keepalived
+            |
+            |cat >/etc/keepalived/keepalived.conf <<EOF
+            |global_defs {
+            |  vrrp_startup_delay 15  
+            |}
+            |vrrp_instance VI_1 {
+            |  state ${instance.keepalived.state}
+            |  ${instance.keepalived.state === "BACKUP" ? "nopreempt" : ""}
+            |  interface $iface
+            |  virtual_router_id ${instance.keepalived.virtualRouterId}
+            |  priority ${instance.keepalived.priority}
+            |  advert_int 1
+            |  authentication {
+            |    auth_type PASS
+            |    auth_pass ${instance.keepalived.password}
+            |  }
+            |  virtual_ipaddress {
+            |    ${instance.keepalived.virtualIp}/24
+            |  }
+            |}
+            |EOF
+            |
+            |systemctl enable --now keepalived
+            `,
+        }]
+        : []),
     ],
     runcmd: [
       "sysctl -p /etc/sysctl.d/98-inotify.conf",
       "/usr/bin/pin_ip_addresses.sh",
-      `curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=${k3sVersion} ${
-        kubelet ? 'INSTALL_K3S_EXEC="--kubelet-arg=config=/etc/rancher/k3s/kubelet-config.yaml"' : ""
-      } ${
-        joinMetadata
-          ? `K3S_TOKEN=${JSON.stringify(joinMetadata.token)} K3S_URL=${JSON.stringify(joinMetadata.url)}`
-          : ""
-      } sh -s - ${
-        joinMetadata ? "agent" : "server"
-      } --node-ip=$(cat /etc/node-external-ip) --flannel-iface=$(cat /etc/node-external-iface)`,
+      "/usr/bin/override_k3s_service.sh",
+      ...(instance.role === "server" && instance.keepalived ? ["/usr/bin/setup_keepalived.sh"] : []),
+      `curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=${k3sVersion} INSTALL_K3S_EXEC="${
+        [
+          kubelet ? "--kubelet-arg=config=/etc/rancher/k3s/kubelet-config.yaml" : "",
+        ].join(" ")
+      }" ${k3sCommand}`,
     ],
     package_update: false,
   };
 }
 
 export async function print(...params: string[]) {
-  await ReadableStream.from([new TextEncoder().encode(params.join(" "))]).pipeTo(Deno.stdout.writable, {
-    preventClose: true,
-  });
+  await Deno.stdout.write(new TextEncoder().encode(params.join(" ")));
 }
 
 export function log(...params: unknown[]) {

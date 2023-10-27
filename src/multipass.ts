@@ -182,7 +182,7 @@ export async function multipassInheritSsh(
 export async function multipassWaitForSshReady(
   { ip, abortSignal, sshDirectoryPath }: { ip: string; abortSignal: AbortSignal; sshDirectoryPath: string },
 ) {
-  await print("Waiting for SSH to be ready...");
+  await print("Waiting for SSH to be ready ");
   const maxAttempts = 30;
   try {
     for (let i = 0; i < maxAttempts; i++) {
@@ -267,10 +267,11 @@ export async function multipassDelete(name: string) {
 }
 
 export async function multipassWaitForState(
-  { isReady, instance, abortSignal }: {
+  { isReady, instance, abortSignal, onAfterAttempt }: {
     isReady: (state: InstanceState) => boolean;
     instance: InstanceConfig;
     abortSignal: AbortSignal;
+    onAfterAttempt?: (ready: boolean) => Promise<void>;
   },
 ): Promise<void> {
   while (!abortSignal.aborted) {
@@ -287,6 +288,7 @@ export async function multipassWaitForState(
       }
     })();
 
+    await onAfterAttempt?.(ready);
     if (!ready) {
       await delay(1000);
     } else {
@@ -304,9 +306,16 @@ export async function multipassTailCloudInitOutputLog(
   const tag = gray(`[$ cloud-init ]`);
 
   log();
-  log(tag, "Waiting for instance's 'Running' state");
+  await print(tag, "Waiting for instance's 'Running' state ");
 
-  await multipassWaitForState({ isReady: (state) => state === InstanceState.Running, instance, abortSignal });
+  await multipassWaitForState({
+    isReady: (state) => state === InstanceState.Running,
+    instance,
+    abortSignal,
+    async onAfterAttempt(ready) {
+      await print(ready ? "\n" : ".");
+    },
+  });
 
   log(tag, "Obtaining instance's IP");
   const ip = await multipassWaitForExternalIp(instance, abortSignal);
@@ -389,9 +398,9 @@ export async function multipassPostStart(
 
   ok("Got instance IP", cyan(ip));
 
-  if (instance.role === "server") {
+  if (instance.role === "server" && instance.clusterInit) {
     await multipassWaitForSshReady({ ip, abortSignal, sshDirectoryPath });
-    await multipassResolveClusterLocalDns({ ip, instance });
+    await multipassResolveClusterLocalDns({ ip: instance.keepalived?.virtualIp ?? ip, instance });
 
     if (instance.joinMetadataPath) {
       log("Fetching join token from /var/lib/rancher/k3s/server/node-token over SSH");
@@ -402,7 +411,7 @@ export async function multipassPostStart(
       })).out;
 
       const joinMetadata: JoinMetadata = {
-        url: `https://${ip}:6443`,
+        url: `https://${instance.keepalived?.virtualIp ?? ip}:6443`,
         token: joinToken.trim(),
       };
 
@@ -411,7 +420,7 @@ export async function multipassPostStart(
       await Deno.writeTextFile(instance.joinMetadataPath, JSON.stringify(joinMetadata, null, 2));
     }
 
-    await multipassRoute({ ip, instance });
+    await multipassRoute({ ip: instance.keepalived?.virtualIp ?? ip, instance });
   }
 
   return ip;
@@ -429,7 +438,7 @@ export async function multipassResolveClusterLocalDns(
   },
 ) {
   log(`Adding DNS resolution for svc.${clusterDomain} to cni0 interface`);
-  await print("Waiting for cni0 network interface to be created...");
+  await print("Waiting for cni0 network interface to be created ");
 
   try {
     await (async () => {

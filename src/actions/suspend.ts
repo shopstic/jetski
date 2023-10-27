@@ -20,8 +20,8 @@ export default createCliAction(
 
     const ip = getExternalIp(ipv4, instance.externalNetworkCidr);
 
-    if (instance.role === "server") {
-      await multipassUnroute({ ip, instance });
+    if (instance.role === "server" && instance.clusterInit) {
+      await multipassUnroute({ ip: instance.keepalived?.virtualIp ?? ip, instance });
     }
     await multipassSuspend(instance);
 

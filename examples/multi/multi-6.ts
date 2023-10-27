@@ -1,5 +1,5 @@
 import { AgentInstanceConfig } from "../../src/types.ts";
-import agentInstanceConfig from "./multi-2.ts";
+import agentInstanceConfig from "./multi-4.ts";
 
 export default {
   ...agentInstanceConfig,

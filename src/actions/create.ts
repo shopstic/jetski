@@ -185,10 +185,10 @@ export async function createInstance(instance: InstanceConfig, signal: AbortSign
 
   const ip = await multipassPostStart(instance, signal);
 
-  if (instance.role === "server") {
-    await updateKubeconfig({ ip, instance });
+  if (instance.role === "server" && instance.clusterInit) {
+    await updateKubeconfig({ ip: instance.keepalived?.virtualIp ?? ip, instance });
   } else {
-    ok(`Agent ${cyan(name)} is ready!`);
+    ok(`Instance ${cyan(name)} is ready!`);
   }
 }
 

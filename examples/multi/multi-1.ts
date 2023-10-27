@@ -6,7 +6,7 @@ export default {
   contextName: "jetski-multi",
   image: "22.04",
   cpus: 15,
-  memoryGiBs: 56,
+  memoryGiBs: 50,
   diskGiBs: 200,
   k3sVersion: "v1.24.17+k3s1",
   serviceCidr: "10.254.244.0/22",
@@ -15,7 +15,6 @@ export default {
   clusterDomain: "cluster.local",
   bridged: Boolean(Deno.env.get("JETSKI_INSTANCE_BRIDGED")),
   externalNetworkCidr: Deno.env.get("JETSKI_INSTANCE_NODE_IP_CIDR"),
-  externalNetworkInterface: "eth1",
   disableComponents: {
     traefik: true,
     metricsServer: true,
@@ -26,8 +25,16 @@ export default {
   },
   // datastoreEndpoint: "http://192.168.2.22:2379"
   kubelet: {
-    maxPods: 500,
+    maxPods: 254,
   },
   sshDirectoryPath: "./.secrets/.ssh",
   joinMetadataPath: "./.secrets/join.json",
+  clusterInit: true,
+  keepalived: {
+    state: "MASTER",
+    virtualRouterId: 101,
+    virtualIp: "10.255.250.101",
+    priority: 255,
+    password: "foobar",
+  },
 } satisfies ServerInstanceConfig;

@@ -27,7 +27,7 @@ export const ServerInstanceConfigSchema = Type.Object({
   clusterDnsIp: Ipv4,
   clusterDomain: NonEmptyString({ format: "hostname" }),
   kubelet: Type.Optional(Type.Object({
-    maxPods: PosInt(),
+    maxPods: Type.Optional(PosInt()),
   })),
   disableComponents: Type.Optional(Type.Object({
     coredns: Type.Optional(Type.Boolean()),
@@ -39,9 +39,17 @@ export const ServerInstanceConfigSchema = Type.Object({
   nodeLabels: Type.Optional(Type.Record(NonEmptyString(), NonEmptyString())),
   nodeTaints: Type.Optional(Type.Record(NonEmptyString(), NonEmptyString())),
   sshDirectoryPath: NonEmptyString(),
-  joinMetadataPath: Type.Optional(NonEmptyString()),
+  joinMetadataPath: NonEmptyString(),
   userName: Type.Optional(NonEmptyString()),
   userPassword: Type.Optional(NonEmptyString()),
+  clusterInit: Type.Optional(Type.Boolean()),
+  keepalived: Type.Optional(Type.Object({
+    state: Type.Union([Type.Literal("MASTER"), Type.Literal("BACKUP")]),
+    virtualRouterId: PosInt(),
+    virtualIp: Ipv4,
+    priority: PosInt(),
+    password: NonEmptyString(),
+  })),
 });
 
 export const AgentInstanceConfigSchema = Type.Object({
@@ -64,6 +72,11 @@ export const AgentInstanceConfigSchema = Type.Object({
   joinMetadataPath: NonEmptyString(),
   userName: Type.Optional(NonEmptyString()),
   userPassword: Type.Optional(NonEmptyString()),
+});
+
+export const ClusterInstanceConfigSchema = Type.Object({
+  servers: Type.Array(ServerInstanceConfigSchema),
+  agents: Type.Array(AgentInstanceConfigSchema),
 });
 
 export const InstanceConfigSchema = Type.Union([
