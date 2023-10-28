@@ -65,6 +65,7 @@
               inherit (pkgs)
                 kubectl
                 powershell
+                tmux
                 ;
             };
         in

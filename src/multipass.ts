@@ -400,7 +400,7 @@ export async function multipassPostStart(
 
   if (instance.role === "server" && instance.clusterInit) {
     await multipassWaitForSshReady({ ip, abortSignal, sshDirectoryPath });
-    await multipassResolveClusterLocalDns({ ip: instance.keepalived?.virtualIp ?? ip, instance });
+    await multipassResolveClusterLocalDns({ ip: instance.keepalived?.virtualIp ?? ip, instance, abortSignal });
 
     if (instance.joinMetadataPath) {
       log("Fetching join token from /var/lib/rancher/k3s/server/node-token over SSH");
