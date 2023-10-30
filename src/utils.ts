@@ -309,7 +309,7 @@ export async function createCloudInitConfig(
     ],
     runcmd: [
       "sysctl -p /etc/sysctl.d/98-inotify.conf",
-      "/usr/bin//update_timesyncd.sh",
+      "/usr/bin/install_chrony.sh",
       "/usr/bin/pin_ip_addresses.sh",
       "/usr/bin/override_k3s_service.sh",
       ...(instance.role === "server" && instance.keepalived ? ["/usr/bin/setup_keepalived.sh"] : []),

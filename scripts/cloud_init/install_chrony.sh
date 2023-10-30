@@ -3,7 +3,7 @@
 set -euo pipefail
 
 systemctl disable --now systemd-timesyncd
-apt install -y chrony
+apt-get install -y chrony
 
 cat >/etc/chrony/chrony.conf <<EOF
 pool time.aws.com iburst
