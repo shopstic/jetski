@@ -30,8 +30,15 @@ network:
 EOF
 
 chmod 0700 /etc/netplan/*
-netplan try
 netplan apply
+
+echo "Waiting for network to come back up..."
+
+while ! ping -c 1 -W 1 8.8.8.8; do
+  sleep 1
+  echo "Still waiting for network to come back up..."
+done
+
 
 # Install multipass
 snap install multipass
@@ -67,16 +74,19 @@ projects: []
 cluster: null
 EOF
 
-multipass set local.driver=lxd
 snap connect multipass:lxd lxd
+multipass set local.driver=lxd
+sleep 5
 multipass set local.passphrase=foo
+sleep 5
 multipass set local.bridged-network=br0
+sleep 5
 
 mkdir -p /etc/systemd/system/snap.multipass.multipassd.service.d
 cat >/etc/systemd/system/snap.multipass.multipassd.service.d/override.conf <<EOF
 [Service]
 ExecStart=
-ExecStart=/usr/bin/snap run multipass.multipassd --verbosity debug --logger stderr --address $(hostname):51001
+ExecStart=/usr/bin/snap run multipass.multipassd --verbosity debug --logger stderr --address $(hostname):51000
 EOF
 
 cat << EOF > /etc/systemd/system/multipassd-proxy.service
@@ -85,7 +95,7 @@ Description=Multipassd Socat TCP Proxy Service
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/socat TCP-LISTEN:51000,bind=0.0.0.0,reuseaddr,fork TCP:127.0.1.1:51001
+ExecStart=/usr/bin/socat TCP-LISTEN:51000,bind=${BR_STATIC_ADDRESS},reuseaddr,fork TCP:127.0.1.1:51000
 Restart=always
 User=nobody
 RestartSec=1
@@ -99,6 +109,7 @@ systemctl daemon-reload
 systemctl restart snap.multipass.multipassd.service
 systemctl enable --now multipassd-proxy.service
 
+sleep 5
 # Test it
 export MULTIPASS_SERVER_ADDRESS="$(hostname):51000"
 multipass version
