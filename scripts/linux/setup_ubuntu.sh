@@ -95,7 +95,7 @@ Description=Multipassd Socat TCP Proxy Service
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/socat TCP-LISTEN:51000,bind=${BR_STATIC_ADDRESS},reuseaddr,fork TCP:127.0.1.1:51000
+ExecStart=/usr/bin/socat TCP-LISTEN:51000,bind=$(ip -br addr show br0 | awk '{print $3}' | awk -F/ '{print $1}'),reuseaddr,fork TCP:127.0.1.1:51000
 Restart=always
 User=nobody
 RestartSec=1
