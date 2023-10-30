@@ -22,10 +22,6 @@ for arg in "$@"; do
   fi
 done
 
-# Display collected arguments (You can remove this part)
-echo "Node IDs: ${node_ids[*]}"
-echo "Arguments: ${args[*]}"
-
 SCRIPT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 
 # Initialize the tmux command string

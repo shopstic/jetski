@@ -37,4 +37,6 @@ export default {
     priority: 255,
     password: "foobar",
   },
+  userName: "ubuntu",
+  userPassword: "ubuntu",
 } satisfies ServerInstanceConfig;

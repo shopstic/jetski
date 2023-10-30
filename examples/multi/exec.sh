@@ -22,10 +22,6 @@ for arg in "$@"; do
   fi
 done
 
-# Display collected arguments (You can remove this part)
-echo "Node IDs: ${node_ids[*]}"
-echo "Arguments: ${args[*]}"
-
 SCRIPT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 for node_id in "${node_ids[@]}"; do
   MULTIPASS_SERVER_ADDRESS="um790-${node_id}:51000" "${SCRIPT_DIR}"/../../cli.sh run --config ./examples/multi/multi-"${node_id}".ts "${args[@]}"

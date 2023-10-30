@@ -399,8 +399,9 @@ export async function multipassPostStart(
   ok("Got instance IP", cyan(ip));
 
   if (instance.role === "server" && instance.clusterInit) {
+    const clusterIp = instance.keepalived?.virtualIp ?? ip;
     await multipassWaitForSshReady({ ip, abortSignal, sshDirectoryPath });
-    await multipassResolveClusterLocalDns({ ip: instance.keepalived?.virtualIp ?? ip, instance, abortSignal });
+    await multipassResolveClusterLocalDns({ ip: clusterIp, instance, abortSignal });
 
     if (instance.joinMetadataPath) {
       log("Fetching join token from /var/lib/rancher/k3s/server/node-token over SSH");
@@ -420,7 +421,8 @@ export async function multipassPostStart(
       await Deno.writeTextFile(instance.joinMetadataPath, JSON.stringify(joinMetadata, null, 2));
     }
 
-    await multipassRoute({ ip: instance.keepalived?.virtualIp ?? ip, instance });
+    await multipassRoute({ ip: clusterIp, instance });
+    return clusterIp;
   }
 
   return ip;

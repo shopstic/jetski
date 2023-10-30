@@ -21,10 +21,10 @@ export default createCliAction(
     }
 
     await multipassStart(instance);
-    const ip = await multipassPostStart(instance, signal);
+    const clusterIp = await multipassPostStart(instance, signal);
 
     if (instance.role === "server" && instance.clusterInit) {
-      await updateKubeconfig({ ip, instance });
+      await updateKubeconfig({ ip: clusterIp, instance });
     }
 
     ok(`Instance '${name}' has been started`);
