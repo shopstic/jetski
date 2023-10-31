@@ -1,7 +1,7 @@
-import { createCliAction, ExitCode, resolvePath, Type } from "../deps.ts";
-import { multipassInfo, multipassPostStart, multipassStart } from "../multipass.ts";
+import { createCliAction, ExitCode, gray, resolvePath, Type } from "../deps.ts";
+import { multipassInfo, multipassInheritSsh, multipassPostStart, multipassStart } from "../multipass.ts";
 import { InstanceConfigPathSchema, InstanceState } from "../types.ts";
-import { loadInstanceConfig, ok } from "../utils.ts";
+import { loadInstanceConfig, log, ok } from "../utils.ts";
 import { updateKubeconfig } from "./create.ts";
 
 export default createCliAction(
@@ -21,10 +21,21 @@ export default createCliAction(
     }
 
     await multipassStart(instance);
-    const clusterIp = await multipassPostStart(instance, signal);
+    const ip = await multipassPostStart(instance, signal);
+
+    if (state === InstanceState.Suspended) {
+      log("Restarting chronyd to re-sync time after suspension...");
+      await multipassInheritSsh({
+        cmd: ["sudo", "systemctl", "restart", "chronyd"],
+        sshDirectoryPath: instance.sshDirectoryPath,
+        ip,
+        abortSignal: signal,
+        tag: gray("[ ssh ... systemctl restart chronyd ]"),
+      });
+    }
 
     if (instance.role === "server" && instance.clusterInit) {
-      await updateKubeconfig({ ip: clusterIp, instance });
+      await updateKubeconfig({ ip: instance.keepalived?.virtualIp ?? ip, instance });
     }
 
     ok(`Instance '${name}' has been started`);

@@ -1,7 +1,7 @@
 import { createCliAction, ExitCode, resolvePath, Type } from "../deps.ts";
 import { multipassInfo, multipassSuspend, multipassUnroute } from "../multipass.ts";
 import { InstanceConfigPathSchema, InstanceState } from "../types.ts";
-import { getExternalIp, loadInstanceConfig, ok } from "../utils.ts";
+import { loadInstanceConfig, ok } from "../utils.ts";
 
 export default createCliAction(
   Type.Object({
@@ -12,16 +12,14 @@ export default createCliAction(
     const instance = await loadInstanceConfig(absoluteConfigPath);
     const { name } = instance;
 
-    const { state, ipv4 } = await multipassInfo(instance);
+    const { state } = await multipassInfo(instance);
 
     if (state !== InstanceState.Running) {
       throw new Error(`Instance '${name}' is not in 'Running' state. Current state is '${state}'`);
     }
 
-    const ip = getExternalIp(ipv4, instance.externalNetworkCidr);
-
     if (instance.role === "server" && instance.clusterInit) {
-      await multipassUnroute({ ip: instance.keepalived?.virtualIp ?? ip, instance });
+      await multipassUnroute({ instance });
     }
     await multipassSuspend(instance);
 

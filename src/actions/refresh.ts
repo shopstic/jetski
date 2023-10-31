@@ -24,7 +24,9 @@ export default createCliAction(
       throw new Error(`Instance '${name}' is not in 'Running' state. Current state is '${state}'`);
     }
 
-    const clusterIp = await multipassPostStart(instance, signal);
+    const ip = await multipassPostStart(instance, signal);
+    const clusterIp = instance.keepalived?.virtualIp ?? ip;
+
     await updateKubeconfig({ ip: clusterIp, instance });
 
     ok(`Local routes and kubeconfig for instance '${name}' have been updated with IP: ${clusterIp}`);

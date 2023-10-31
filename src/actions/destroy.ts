@@ -13,7 +13,7 @@ export async function destroyInstance(instance: InstanceConfig) {
     log(`Going to destroy ${cyan(name)} at ${cyan(ip)}`);
 
     if (instance.role === "server" && instance.clusterInit) {
-      await multipassUnroute({ ip: instance.keepalived?.virtualIp ?? ip, instance });
+      await multipassUnroute({ instance });
     }
 
     await multipassK3sKillAll({ ip, sshDirectoryPath });

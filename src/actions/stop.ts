@@ -21,7 +21,7 @@ export default createCliAction(
     const ip = getExternalIp(ipv4, instance.externalNetworkCidr);
 
     if (instance.role === "server" && instance.clusterInit) {
-      await multipassUnroute({ ip: instance.keepalived?.virtualIp ?? ip, instance });
+      await multipassUnroute({ instance });
     }
     await multipassK3sKillAll({ ip, sshDirectoryPath });
     await multipassStop(instance);
