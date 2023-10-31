@@ -132,6 +132,8 @@ function multipassCreateSshCommand(
     "UserKnownHostsFile=/dev/null",
     "-o",
     "StrictHostKeyChecking=no",
+    "-o",
+    "LogLevel=ERROR",
     "-i",
     `${sshDirectoryPath}/id_ed25519`,
     `ubuntu@${ip}`,
