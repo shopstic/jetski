@@ -18,20 +18,21 @@ import {
 import { InstanceConfig, InstanceState, JoinMetadata, MultipassInfo, ServerInstanceConfig } from "./types.ts";
 import { err, getExternalIp, log, ok, print } from "./utils.ts";
 
-export const multipassBin = memoizePromise(() => locateMultipassBin());
+export const multipassBin = memoizePromise(() => locateBin("multipass"));
+export const sshBin = memoizePromise(() => locateBin("ssh"));
 
-export async function locateMultipassBin(): Promise<string> {
+export async function locateBin(name: string): Promise<string> {
   try {
     return (await captureExec({
-      cmd: ["which", "multipass.exe"],
+      cmd: ["which", `${name}.exe`],
     })).out.trim();
   } catch {
     try {
       return (await captureExec({
-        cmd: ["which", "multipass"],
+        cmd: ["which", name],
       })).out.trim();
     } catch {
-      throw new Error("Error: multipass binary is not found");
+      throw new Error(`Error: ${name} binary is not found`);
     }
   }
 }
@@ -122,12 +123,12 @@ export async function multipassInfo(
   return result.value.info[name];
 }
 
-function multipassCreateSshCommand(
+async function multipassCreateSshCommand(
   { sshDirectoryPath, ip, timeoutSeconds }: { sshDirectoryPath: string; ip: string; timeoutSeconds?: number },
 ) {
   return [
     ...(timeoutSeconds !== undefined) ? ["timeout", String(timeoutSeconds)] : [],
-    "ssh",
+    await sshBin(),
     "-o",
     "UserKnownHostsFile=/dev/null",
     "-o",
@@ -146,7 +147,7 @@ export async function multipassSshInteractive({ cmd, sshDirectoryPath, ip }: {
   cmd: string[];
 }): Promise<number> {
   const execCmd = [
-    ...multipassCreateSshCommand({ sshDirectoryPath, ip }),
+    ...await multipassCreateSshCommand({ sshDirectoryPath, ip }),
     ...cmd,
   ];
 
@@ -171,7 +172,7 @@ export async function multipassInheritSsh(
 ): Promise<void> {
   return await inheritExec({
     cmd: [
-      ...multipassCreateSshCommand({ sshDirectoryPath, ip, timeoutSeconds }),
+      ...await multipassCreateSshCommand({ sshDirectoryPath, ip, timeoutSeconds }),
       ...cmd,
     ],
     abortSignal: abortSignal,
@@ -224,7 +225,7 @@ export async function multipassCaptureSsh(
 ) {
   return await captureExec({
     cmd: [
-      ...multipassCreateSshCommand({ sshDirectoryPath, ip, timeoutSeconds }),
+      ...await multipassCreateSshCommand({ sshDirectoryPath, ip, timeoutSeconds }),
       ...cmd,
     ],
     abortSignal: abortSignal,
