@@ -422,7 +422,6 @@ export async function multipassPostStart(
     }
 
     await multipassRoute({ ip: clusterIp, instance });
-    return clusterIp;
   }
 
   return ip;
@@ -490,8 +489,7 @@ export async function multipassResolveClusterLocalDns(
 }
 
 export async function multipassUnroute(
-  { ip, instance: { clusterCidr, serviceCidr, clusterDomain } }: {
-    ip: string;
+  { instance: { clusterCidr, serviceCidr, clusterDomain } }: {
     instance: ServerInstanceConfig;
   },
 ) {
@@ -527,7 +525,7 @@ export async function multipassUnroute(
     for (const cidr of [clusterCidr, serviceCidr]) {
       try {
         await inheritExec({
-          cmd: ["sudo", "/sbin/route", "delete", "-net", cidr, ip],
+          cmd: ["sudo", "/sbin/route", "delete", "-net", cidr],
           stdin: { inherit: true },
           stdout: { read: printOutLines((line) => `${gray("[$ route ]")} ${line}`) },
           stderr: { read: printErrLines((line) => `${gray("[$ route ]")} ${line}`) },
@@ -585,6 +583,12 @@ export async function multipassRoute(
   } else {
     log("Adding routes, will require root permissions...");
     for (const cidr of [clusterCidr, serviceCidr]) {
+      await inheritExec({
+        cmd: ["sudo", "/sbin/route", "delete", "-net", cidr],
+        stdin: { inherit: true },
+        stdout: { ignore: true },
+        stderr: { ignore: true },
+      });
       await inheritExec({
         cmd: ["sudo", "/sbin/route", "add", "-net", cidr, ip],
         stdin: { inherit: true },
