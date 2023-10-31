@@ -505,7 +505,7 @@ export async function multipassUnroute(
       const cmd = [
         "powershell.exe",
         "-Command",
-        `Remove-NetRoute -DestinationPrefix ${cidr} -Confirm:$false`,
+        `Remove-NetRoute -DestinationPrefix ${cidr} -Confirm:$false -erroraction "silentlycontinue"`,
       ];
       await inheritExec({
         cmd,
