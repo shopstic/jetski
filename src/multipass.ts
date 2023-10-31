@@ -368,10 +368,7 @@ export async function multipassWaitForExternalIp(
   return getExternalIp((await multipassInfo({ name })).ipv4);
 }
 
-export async function multipassPostStart(
-  instance: InstanceConfig,
-  abortSignal: AbortSignal,
-): Promise<string> {
+export async function multipassPostStart(instance: InstanceConfig, abortSignal: AbortSignal): Promise<string> {
   const { name, sshDirectoryPath } = instance;
 
   const state = await (async () => {
@@ -423,6 +420,7 @@ export async function multipassPostStart(
       await Deno.writeTextFile(instance.joinMetadataPath, JSON.stringify(joinMetadata, null, 2));
     }
 
+    await multipassUnroute({ instance });
     await multipassRoute({ ip: clusterIp, instance });
   }
 
@@ -601,12 +599,6 @@ export async function multipassRoute(
   } else {
     log("Adding routes, will require root permissions...");
     for (const cidr of [clusterCidr, serviceCidr]) {
-      await inheritExec({
-        cmd: ["sudo", "/sbin/route", "delete", "-net", cidr],
-        stdin: { inherit: true },
-        stdout: { ignore: true },
-        stderr: { ignore: true },
-      });
       await inheritExec({
         cmd: ["sudo", "/sbin/route", "add", "-net", cidr, ip],
         stdin: { inherit: true },
