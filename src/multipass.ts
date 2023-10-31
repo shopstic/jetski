@@ -489,6 +489,10 @@ export async function multipassResolveClusterLocalDns(
   });
 }
 
+function wrapPowershellScript(script: string) {
+  return `try { ${script}; if (-not $?) { exit 1 } } catch { Write-Host 'An error occurred:'; Write-Host $_; exit 1 }`;
+}
+
 export async function multipassUnroute(
   { instance: { clusterCidr, serviceCidr, clusterDomain } }: {
     instance: ServerInstanceConfig;
@@ -501,7 +505,10 @@ export async function multipassUnroute(
     for (const cidr of [clusterCidr, serviceCidr]) {
       const cmd = [
         "powershell.exe",
-        `'Remove-NetRoute -DestinationPrefix ${cidr} -Confirm:$false -erroraction "silentlycontinue"'`,
+        "-Command",
+        wrapPowershellScript(
+          `Remove-NetRoute -DestinationPrefix ${cidr} -Confirm:$false -erroraction "silentlycontinue"`,
+        ),
       ];
       await inheritExec({
         cmd,
@@ -515,7 +522,10 @@ export async function multipassUnroute(
     await inheritExec({
       cmd: [
         "powershell.exe",
-        `Foreach($x in (Get-DnsClientNrptRule | Where-Object {$_.Namespace -eq ".svc.${clusterDomain}"} | foreach {$_.Name})){ Remove-DnsClientNrptRule -Name "$x" -Force }`,
+        "-Command",
+        wrapPowershellScript(
+          `Foreach($x in (Get-DnsClientNrptRule | Where-Object {$_.Namespace -eq ".svc.${clusterDomain}"} | foreach {$_.Name})){ Remove-DnsClientNrptRule -Name "$x" -Force }`,
+        ),
       ],
       stdin: { inherit: true },
       stdout: { read: printOutLines((line) => `${gray("[$ Remove-DnsClientNrptRule ]")} ${line}`) },
@@ -563,7 +573,10 @@ export async function multipassRoute(
       await inheritExec({
         cmd: [
           "powershell.exe",
-          `'New-NetRoute -DestinationPrefix ${cidr} -InterfaceAlias "vEthernet (Default Switch)" -NextHop ${ip}'`,
+          "-Command",
+          wrapPowershellScript(
+            `New-NetRoute -DestinationPrefix ${cidr} -InterfaceAlias "vEthernet (Default Switch)" -NextHop ${ip}`,
+          ),
         ],
         stdin: { inherit: true },
         stdout: { read: printOutLines((line) => `${gray("[$ New-NetRoute ]")} ${line}`) },
@@ -575,7 +588,10 @@ export async function multipassRoute(
     await inheritExec({
       cmd: [
         "powershell.exe",
-        `'Add-DnsClientNrptRule -Namespace ".svc.${clusterDomain}" -DnsSecEnable -NameServers "${clusterDnsIp}"'`,
+        "-Command",
+        wrapPowershellScript(
+          `Add-DnsClientNrptRule -Namespace ".svc.${clusterDomain}" -DnsSecEnable -NameServers "${clusterDnsIp}"`,
+        ),
       ],
       stdin: { inherit: true },
       stdout: { read: printOutLines((line) => `${gray("[$ Add-DnsClientNrptRule ]")} ${line}`) },
