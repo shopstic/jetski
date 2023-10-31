@@ -367,10 +367,7 @@ export async function multipassWaitForExternalIp(
   return getExternalIp((await multipassInfo({ name })).ipv4);
 }
 
-export async function multipassPostStart(
-  instance: InstanceConfig,
-  abortSignal: AbortSignal,
-): Promise<string> {
+export async function multipassPostStart(instance: InstanceConfig, abortSignal: AbortSignal): Promise<string> {
   const { name, sshDirectoryPath } = instance;
 
   const state = await (async () => {
@@ -422,6 +419,7 @@ export async function multipassPostStart(
       await Deno.writeTextFile(instance.joinMetadataPath, JSON.stringify(joinMetadata, null, 2));
     }
 
+    await multipassUnroute({ instance });
     await multipassRoute({ ip: clusterIp, instance });
   }
 
@@ -489,6 +487,10 @@ export async function multipassResolveClusterLocalDns(
   });
 }
 
+function wrapPowershellScript(script: string) {
+  return `try { ${script}; if (-not $?) { exit 1 } } catch { Write-Host 'An error occurred:'; Write-Host $_; exit 1 }`;
+}
+
 export async function multipassUnroute(
   { instance: { clusterCidr, serviceCidr, clusterDomain } }: {
     instance: ServerInstanceConfig;
@@ -501,7 +503,8 @@ export async function multipassUnroute(
     for (const cidr of [clusterCidr, serviceCidr]) {
       const cmd = [
         "powershell.exe",
-        `'Remove-NetRoute -DestinationPrefix ${cidr} -Confirm:$false -erroraction "silentlycontinue"'`,
+        "-Command",
+        `Remove-NetRoute -DestinationPrefix ${cidr} -Confirm:$false -ErrorAction SilentlyContinue; exit 0`,
       ];
       await inheritExec({
         cmd,
@@ -515,6 +518,7 @@ export async function multipassUnroute(
     await inheritExec({
       cmd: [
         "powershell.exe",
+        "-Command",
         `Foreach($x in (Get-DnsClientNrptRule | Where-Object {$_.Namespace -eq ".svc.${clusterDomain}"} | foreach {$_.Name})){ Remove-DnsClientNrptRule -Name "$x" -Force }`,
       ],
       stdin: { inherit: true },
@@ -563,7 +567,10 @@ export async function multipassRoute(
       await inheritExec({
         cmd: [
           "powershell.exe",
-          `'New-NetRoute -DestinationPrefix ${cidr} -InterfaceAlias "vEthernet (Default Switch)" -NextHop ${ip}'`,
+          "-Command",
+          wrapPowershellScript(
+            `New-NetRoute -DestinationPrefix ${cidr} -InterfaceAlias "vEthernet (Default Switch)" -NextHop ${ip}`,
+          ),
         ],
         stdin: { inherit: true },
         stdout: { read: printOutLines((line) => `${gray("[$ New-NetRoute ]")} ${line}`) },
@@ -575,7 +582,10 @@ export async function multipassRoute(
     await inheritExec({
       cmd: [
         "powershell.exe",
-        `'Add-DnsClientNrptRule -Namespace ".svc.${clusterDomain}" -DnsSecEnable -NameServers "${clusterDnsIp}"'`,
+        "-Command",
+        wrapPowershellScript(
+          `Add-DnsClientNrptRule -Namespace ".svc.${clusterDomain}" -DnsSecEnable -NameServers "${clusterDnsIp}"`,
+        ),
       ],
       stdin: { inherit: true },
       stdout: { read: printOutLines((line) => `${gray("[$ Add-DnsClientNrptRule ]")} ${line}`) },
@@ -584,12 +594,6 @@ export async function multipassRoute(
   } else {
     log("Adding routes, will require root permissions...");
     for (const cidr of [clusterCidr, serviceCidr]) {
-      await inheritExec({
-        cmd: ["sudo", "/sbin/route", "delete", "-net", cidr],
-        stdin: { inherit: true },
-        stdout: { ignore: true },
-        stderr: { ignore: true },
-      });
       await inheritExec({
         cmd: ["sudo", "/sbin/route", "add", "-net", cidr, ip],
         stdin: { inherit: true },
