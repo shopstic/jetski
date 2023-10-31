@@ -507,14 +507,12 @@ export async function multipassUnroute(
         "-Command",
         `Remove-NetRoute -DestinationPrefix ${cidr} -Confirm:$false -ErrorAction SilentlyContinue; exit 0`,
       ];
-      try {
-        await inheritExec({
-          cmd,
-          stdin: { inherit: true },
-          stdout: { read: printOutLines((line) => `${gray("[$ Remove-NetRoute ]")} ${line}`) },
-          stderr: { read: printErrLines((line) => `${gray("[$ Remove-NetRoute ]")} ${line}`) },
-        });
-      }
+      await inheritExec({
+        cmd,
+        stdin: { inherit: true },
+        stdout: { read: printOutLines((line) => `${gray("[$ Remove-NetRoute ]")} ${line}`) },
+        stderr: { read: printErrLines((line) => `${gray("[$ Remove-NetRoute ]")} ${line}`) },
+      });
     }
 
     log("Removing NRPT rule");
