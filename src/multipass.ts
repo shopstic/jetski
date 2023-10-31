@@ -505,9 +505,7 @@ export async function multipassUnroute(
       const cmd = [
         "powershell.exe",
         "-Command",
-        wrapPowershellScript(
-          `Remove-NetRoute -DestinationPrefix ${cidr} -Confirm:$false -erroraction "silentlycontinue"`,
-        ),
+        `Remove-NetRoute -DestinationPrefix ${cidr} -Confirm:$false`,
       ];
       await inheritExec({
         cmd,
@@ -522,9 +520,7 @@ export async function multipassUnroute(
       cmd: [
         "powershell.exe",
         "-Command",
-        wrapPowershellScript(
-          `Foreach($x in (Get-DnsClientNrptRule | Where-Object {$_.Namespace -eq ".svc.${clusterDomain}"} | foreach {$_.Name})){ Remove-DnsClientNrptRule -Name "$x" -Force }`,
-        ),
+        `Foreach($x in (Get-DnsClientNrptRule | Where-Object {$_.Namespace -eq ".svc.${clusterDomain}"} | foreach {$_.Name})){ Remove-DnsClientNrptRule -Name "$x" -Force }`,
       ],
       stdin: { inherit: true },
       stdout: { read: printOutLines((line) => `${gray("[$ Remove-DnsClientNrptRule ]")} ${line}`) },
