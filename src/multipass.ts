@@ -505,14 +505,16 @@ export async function multipassUnroute(
       const cmd = [
         "powershell.exe",
         "-Command",
-        `Remove-NetRoute -DestinationPrefix ${cidr} -Confirm:$false -erroraction "silentlycontinue"`,
+        `Remove-NetRoute -DestinationPrefix ${cidr} -Confirm:$false -ErrorAction SilentlyContinue; exit 0`,
       ];
-      await inheritExec({
-        cmd,
-        stdin: { inherit: true },
-        stdout: { read: printOutLines((line) => `${gray("[$ Remove-NetRoute ]")} ${line}`) },
-        stderr: { read: printErrLines((line) => `${gray("[$ Remove-NetRoute ]")} ${line}`) },
-      });
+      try {
+        await inheritExec({
+          cmd,
+          stdin: { inherit: true },
+          stdout: { read: printOutLines((line) => `${gray("[$ Remove-NetRoute ]")} ${line}`) },
+          stderr: { read: printErrLines((line) => `${gray("[$ Remove-NetRoute ]")} ${line}`) },
+        });
+      }
     }
 
     log("Removing NRPT rule");
