@@ -64,8 +64,6 @@
               inherit deno;
               inherit (pkgs)
                 kubectl
-                powershell
-                tmux
                 ;
             };
         in
@@ -84,7 +82,10 @@
               mkdir -p ./.vscode
               cat ${vscodeSettings} > ./.vscode/settings.json
             '';
-            buildInputs = runtimeInputs;
+            buildInputs = runtimeInputs ++ [
+              pkgs.powershell
+              pkgs.tmux
+            ];
           };
           packages = {
             inherit jetski;
