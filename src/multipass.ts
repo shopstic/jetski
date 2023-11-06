@@ -254,6 +254,12 @@ export async function multipassStop({ name }: { name: string }) {
   await multipass({ command: "stop", args: [name], stdout: { ignore: true } });
 }
 
+export async function multipassResize({ name, cpus, memoryGiBs, diskGiBs }: InstanceConfig) {
+  await multipass({ command: "set", args: [`local.${name}.cpus=${cpus}`], stdout: { ignore: true } });
+  await multipass({ command: "set", args: [`local.${name}.disk=${diskGiBs}G`], stdout: { ignore: true } });
+  await multipass({ command: "set", args: [`local.${name}.memory=${memoryGiBs}G`], stdout: { ignore: true } });
+}
+
 export async function multipassStart({ name }: { name: string }) {
   await multipass({
     command: "start",
