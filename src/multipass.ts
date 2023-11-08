@@ -94,7 +94,7 @@ export async function multipassInfo(
           e,
         );
       } else if (e instanceof NonZeroExitError) {
-        throw new Error(`Command 'multipass info ...' failed: ${e.output?.err}}`, e);
+        throw new Error(`Command 'multipass info ...' failed: ${e.output?.err ?? e.output?.out}`, e);
       }
       throw e;
     } finally {
@@ -382,7 +382,7 @@ export async function multipassPostStart(instance: InstanceConfig, abortSignal: 
       try {
         return (await multipassInfo({ name })).state;
       } catch (e) {
-        err("Failed obtaining instance state, will retry in 1s", e.message);
+        err("Failed obtaining instance state, will retry in 1s. Reason:", e.message);
         await delay(1000, { signal: abortSignal });
       }
     }

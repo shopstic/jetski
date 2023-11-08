@@ -14,7 +14,7 @@ auto_fmt() {
 }
 
 update_cache() {
-  deno cache --lock=deno.lock "${SCRIPT_DIR}"/src/deps.ts "${SCRIPT_DIR}"/src/app.ts
+  rm -f deno.lock && deno cache --lock=deno.lock "${SCRIPT_DIR}"/src/deps.ts "${SCRIPT_DIR}"/src/app.ts
 }
 
 update_lock() {
