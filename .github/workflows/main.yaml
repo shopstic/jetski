@@ -20,7 +20,7 @@ jobs:
           - nix: aarch64-darwin
             runner: arm64-darwin
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Check
         run: nix develop -v -c ./cli.sh code_quality
