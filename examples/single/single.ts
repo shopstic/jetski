@@ -4,10 +4,10 @@ export default {
   role: "server",
   name: "jetski-single-node",
   image: "22.04",
-  cpus: 15,
-  memoryGiBs: 56,
-  diskGiBs: 100,
-  k3sVersion: "v1.24.17+k3s1",
+  cpus: 1,
+  memoryGiBs: 2,
+  diskGiBs: 10,
+  k3sVersion: "v1.29.1+k3s2",
   clusterCidr: "10.254.254.0/24",
   serviceCidr: "10.254.255.0/24",
   clusterDnsIp: "10.254.255.10",
@@ -22,9 +22,11 @@ export default {
     "com.jetski/foo": "bar",
     "com.jetski/baz": "boo",
   },
-  sshDirectoryPath: "./.ssh",
+  sshDirectoryPath: "./.secrets/.ssh",
   // datastoreEndpoint: "http://192.168.2.22:2379"
   kubelet: {
     maxPods: 500,
   },
+  joinMetadataPath: "./.secrets/join.json",
+  clusterInit: true,
 } satisfies ServerInstanceConfig;
