@@ -8,7 +8,7 @@ export default {
   cpus: 15,
   memoryGiBs: 50,
   diskGiBs: 200,
-  k3sVersion: "v1.24.17+k3s1",
+  k3sVersion: "v1.28.7+k3s1",
   serviceCidr: "10.254.244.0/22",
   clusterCidr: "10.254.248.0/21",
   clusterDnsIp: "10.254.244.10",

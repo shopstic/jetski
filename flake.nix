@@ -31,15 +31,19 @@
                 "editor.suggest.insertMode" = "replace";
                 "editor.inlayHints.enabled" = "offUnlessPressed";
               };
-              "yaml.schemaStore.enable" = true;
-              "yaml.schemas" = {
-                "https://json.schemastore.org/github-workflow.json" = ".github/workflows/*.yaml";
-              };
-              "nix.enableLanguageServer" = true;
-              "nix.formatterPath" = pkgs.nixpkgs-fmt + "/bin/nixpkgs-fmt";
               "powershell.powerShellAdditionalExePaths" = {
                 "PowerShell Core" = "${pkgs.powershell}/bin/pwsh";
               };
+              "nix.enableLanguageServer" = true;
+              "nix.formatterPath" = pkgs.nixpkgs-fmt + "/bin/nixpkgs-fmt";
+              "nix.serverSettings" = {
+                "nil" = {
+                  "formatting" = {
+                    "command" = [ "nixpkgs-fmt" ];
+                  };
+                };
+              };
+              "nix.serverPath" = pkgs.nil + "/bin/nil";
             };
           };
           jetski = pkgs.callPackage hotPot.lib.denoAppBuild
