@@ -27,11 +27,12 @@ try {
 } catch (e) {
   if (e instanceof NonZeroExitError) {
     console.error(bold(red("[Error]")), JSON.stringify(e, null, 2));
-    Deno.exit(1);
   } else if (Deno.env.get("JETSKI_ENABLE_STACKTRACE") !== "0") {
+    console.error(bold(red("[Error]")), e.message, JSON.stringify(e, null, 2));
     throw e;
   } else {
     console.error(bold(red("[Error]")), e.message);
-    Deno.exit(1);
   }
+
+  Deno.exit(1);
 }

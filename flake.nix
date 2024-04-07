@@ -13,7 +13,7 @@
         let
           pkgs = import nixpkgs { inherit system; };
           hotPotPkgs = hotPot.packages.${system};
-          deno = hotPotPkgs.deno_1_41_x;
+          deno = hotPotPkgs.deno_1_42_x;
           vscodeSettings = pkgs.writeTextFile {
             name = "vscode-settings.json";
             text = builtins.toJSON {
@@ -46,10 +46,9 @@
               "nix.serverPath" = pkgs.nil + "/bin/nil";
             };
           };
-          jetski = pkgs.callPackage hotPot.lib.denoAppBuild
+          jetski = pkgs.callPackage ./nix/build.nix
             {
               inherit deno;
-              denoRunFlags = "-A --no-lock";
               name = "jetski";
               src = builtins.path
                 {
@@ -57,10 +56,10 @@
                   name = "jetski-src";
                   filter = with pkgs.lib; (path: /* type */_:
                     hasInfix "/src" path ||
-                    hasSuffix "/deno.lock" path
+                    hasSuffix "/deno.lock" path ||
+                    hasSuffix "/deno.json" path
                   );
                 };
-              appSrcPath = "./src/app.ts";
             };
           runtimeInputs = builtins.attrValues
             {
@@ -70,7 +69,7 @@
                 ;
             };
         in
-        rec {
+        {
           defaultPackage = pkgs.runCommandLocal "jetski-wrapped"
             {
               buildInputs = [ pkgs.makeWrapper ];

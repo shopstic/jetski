@@ -114,9 +114,7 @@ export async function multipassInfo(
 
   if (!result.isSuccess) {
     throw new Error(
-      `Unexpected output from 'multipass info ...'. Errors:\n${
-        result.errorsToString({ separator: "\n", dataVar: "  -" })
-      }`,
+      `Unexpected output from 'multipass info ...'. Errors:\n${JSON.stringify(result.errors, null, 2)}`,
     );
   }
 

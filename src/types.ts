@@ -1,8 +1,6 @@
-import { PosInt } from "./deps.ts";
-import { FlexObject, NonEmptyString, Static, Type } from "./deps/typebox.ts";
+import { FlexObject, NonEmptyString, PosInt, Static, Type } from "./deps/typebox.ts";
 
 export const Cidr = NonEmptyString({
-  format: "regex",
   pattern: "^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))$",
 });
 export const Ipv4 = NonEmptyString({

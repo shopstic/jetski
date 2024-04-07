@@ -1,25 +1,16 @@
-export * from "https://deno.land/x/utils@2.18.7/cli_utils.ts";
-export * from "https://deno.land/x/utils@2.18.7/exec_utils.ts";
-export * from "https://deno.land/x/utils@2.18.7/validation_utils.ts";
+export * from "@wok/utils/cli";
+export * from "@wok/utils/exec";
+export * from "@wok/utils/validation";
 export * from "./deps/typebox.ts";
-export type { ValidationResult } from "https://deno.land/x/utils@2.18.7/validation_utils.ts";
-export * from "https://deno.land/std@0.205.0/fmt/colors.ts";
+export type { ValidationResult } from "@wok/utils/validation";
+export * from "@std/fmt/colors";
 
-export {
-  basename,
-  dirname,
-  extname,
-  fromFileUrl,
-  join as joinPath,
-  resolve as resolvePath,
-} from "https://deno.land/std@0.205.0/path/mod.ts";
+export { basename, dirname, extname, fromFileUrl, join as joinPath, resolve as resolvePath } from "@std/path";
 
-export { parse as parseYaml, stringify as stringifyYaml } from "https://deno.land/std@0.205.0/yaml/mod.ts";
-export type { YAMLError } from "https://deno.land/std@0.205.0/yaml/_error.ts";
+export { parse as parseYaml, stringify as stringifyYaml } from "@std/yaml";
+export { exists as fsExists } from "@std/fs/exists";
+export { ensureFile } from "@std/fs/ensure-file";
+export { assertExists } from "@std/assert/assert-exists";
+export { memoizePromise } from "@wok/utils/async";
 
-export { exists as fsExists } from "https://deno.land/std@0.205.0/fs/exists.ts";
-export { ensureFile } from "https://deno.land/std@0.205.0/fs/ensure_file.ts";
-export { assertExists } from "https://deno.land/std@0.205.0/assert/assert_exists.ts";
-export { memoizePromise } from "https://deno.land/x/utils@2.18.7/async_utils.ts";
-
-export { delay } from "https://deno.land/std@0.205.0/async/delay.ts";
+export { delay } from "@std/async/delay";

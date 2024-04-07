@@ -1,7 +1,23 @@
-import { dirname, green, printErrLines, printOutLines, resolvePath, validate } from "./deps.ts";
+import {
+  dirname,
+  green,
+  NonZeroExitError,
+  printErrLines,
+  printOutLines,
+  resolvePath,
+  validate,
+  ValueError,
+} from "./deps.ts";
 import { fsExists, gray, inheritExec, joinPath, red, stringifyYaml } from "./deps.ts";
-import { InstanceConfig, InstanceConfigSchema, JoinMetadataSchema } from "./types.ts";
+import { AgentInstanceConfigSchema, InstanceConfig, JoinMetadataSchema, ServerInstanceConfigSchema } from "./types.ts";
 import cloudInitScripts from "./cloud_init_scripts.json" with { type: "json" };
+
+function renderValidationError(error: ValueError) {
+  return `  - at path ${JSON.stringify(error.path)}: ${error.message}`;
+}
+function renderValidationErrors(errors: ValueError[]) {
+  return errors.map(renderValidationError).join("\n");
+}
 
 export function stripMargin(template: TemplateStringsArray, ...expressions: unknown[]) {
   const result = template.reduce((accumulator, part, i) => {
@@ -14,6 +30,17 @@ export function stripMargin(template: TemplateStringsArray, ...expressions: unkn
 export async function loadInstanceConfig(
   instancePath: string,
 ): Promise<InstanceConfig> {
+  try {
+    await inheritExec({
+      cmd: ["deno", "check", instancePath],
+    });
+  } catch (e) {
+    if (e instanceof NonZeroExitError) {
+      throw new Error(`Instance config ${instancePath} is invalid`);
+    }
+    throw e;
+  }
+
   log(gray(`Importing instance config ${instancePath}`));
 
   const instanceMod = await import(instancePath);
@@ -22,16 +49,24 @@ export async function loadInstanceConfig(
     throw new Error("Instance config module does not have a default export");
   }
 
-  const instanceResult = validate(InstanceConfigSchema, instanceMod.default);
+  const instanceConfig = instanceMod.default;
+
+  if (typeof instanceConfig !== "object") {
+    throw new Error(`Instance config is invalid, must be an object`);
+  }
+
+  if (instanceConfig.role !== "server" && instanceConfig.role !== "agent") {
+    throw new Error(
+      `Instance config is invalid, must be an object with a 'role' string property of either 'server' or 'agent'`,
+    );
+  }
+
+  const schema = (instanceConfig.role === "server") ? ServerInstanceConfigSchema : AgentInstanceConfigSchema;
+  const instanceResult = validate(schema, instanceMod.default);
 
   if (!instanceResult.isSuccess) {
     throw new Error(
-      `Instance config is invalid. Reasons:\n${
-        instanceResult.errorsToString({
-          separator: "\n",
-          dataVar: "  -",
-        })
-      }`,
+      `Instance config is invalid. Reasons:\n${renderValidationErrors(instanceResult.errors)}`,
     );
   }
 
@@ -113,10 +148,7 @@ export async function createCloudInitConfig(
 
         if (!result.isSuccess) {
           throw new Error(
-            "Failed parsing metadata due to schema validation errors:\n" + result.errorsToString({
-              separator: "\n",
-              dataVar: "  -",
-            }),
+            `Failed parsing metadata due to schema validation errors:\n${JSON.stringify(result.errors, null, 2)}`,
           );
         }
 
