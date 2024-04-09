@@ -7,6 +7,8 @@ code_quality() {
   deno fmt --check
   echo "Linting..."
   deno lint
+  echo "Running eslint..."
+  eslint .
 }
 
 auto_fmt() {

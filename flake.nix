@@ -71,6 +71,9 @@
               inherit (pkgs)
                 kubectl
                 ;
+              inherit (hotPotPkgs)
+                typescript-eslint
+                ;
             };
         in
         {
