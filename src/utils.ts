@@ -1,15 +1,8 @@
-import {
-  dirname,
-  green,
-  NonZeroExitError,
-  printErrLines,
-  printOutLines,
-  resolvePath,
-  validate,
-  ValueError,
-} from "./deps.ts";
+import type { ValueError } from "./deps.ts";
+import { dirname, green, NonZeroExitError, printErrLines, printOutLines, resolvePath, validate } from "./deps.ts";
 import { fsExists, gray, inheritExec, joinPath, red, stringifyYaml } from "./deps.ts";
-import { AgentInstanceConfigSchema, InstanceConfig, JoinMetadataSchema, ServerInstanceConfigSchema } from "./types.ts";
+import type { InstanceConfig } from "./types.ts";
+import { AgentInstanceConfigSchema, JoinMetadataSchema, ServerInstanceConfigSchema } from "./types.ts";
 import cloudInitScripts from "./cloud_init_scripts.json" with { type: "json" };
 
 function renderValidationError(error: ValueError) {

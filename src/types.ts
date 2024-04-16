@@ -1,4 +1,5 @@
-import { FlexObject, NonEmptyString, PosInt, Static, Type } from "./deps/typebox.ts";
+import type { Static } from "./deps/typebox.ts";
+import { FlexObject, NonEmptyString, PosInt, Type } from "./deps/typebox.ts";
 
 export const Cidr = NonEmptyString({
   pattern: "^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))$",

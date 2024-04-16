@@ -19,7 +19,8 @@ import {
   multipassTailCloudInitOutputLog,
   multipassWaitForState,
 } from "../multipass.ts";
-import { InstanceConfig, InstanceConfigPathSchema, InstanceState, ServerInstanceConfig } from "../types.ts";
+import type { InstanceConfig, ServerInstanceConfig } from "../types.ts";
+import { InstanceConfigPathSchema, InstanceState } from "../types.ts";
 import {
   createCloudInitConfig,
   err,

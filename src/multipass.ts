@@ -1,3 +1,4 @@
+import type { StdInputBehavior, StdOutputBehavior } from "./deps.ts";
 import {
   assertExists,
   captureExec,
@@ -11,11 +12,10 @@ import {
   NonZeroExitError,
   printErrLines,
   printOutLines,
-  StdInputBehavior,
-  StdOutputBehavior,
   validate,
 } from "./deps.ts";
-import { InstanceConfig, InstanceState, JoinMetadata, MultipassInfo, ServerInstanceConfig } from "./types.ts";
+import type { InstanceConfig, JoinMetadata, ServerInstanceConfig } from "./types.ts";
+import { InstanceState, MultipassInfo } from "./types.ts";
 import { err, getExternalIp, log, ok, print } from "./utils.ts";
 
 export const multipassBin = memoizePromise(() => locateBin("multipass"));

@@ -1,4 +1,4 @@
-import { ServerInstanceConfig } from "../../src/types.ts";
+import type { ServerInstanceConfig } from "../../src/types.ts";
 import serverInstanceConfig from "./multi-1.ts";
 
 export default {

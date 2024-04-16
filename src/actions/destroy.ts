@@ -1,6 +1,7 @@
 import { createCliAction, cyan, ExitCode, resolvePath, Type, yellow } from "../deps.ts";
 import { multipass, multipassInfo, multipassK3sKillAll, multipassStop, multipassUnroute } from "../multipass.ts";
-import { InstanceConfig, InstanceConfigPathSchema, InstanceState } from "../types.ts";
+import type { InstanceConfig } from "../types.ts";
+import { InstanceConfigPathSchema, InstanceState } from "../types.ts";
 import { getExternalIp, loadInstanceConfig, log, ok } from "../utils.ts";
 
 export async function destroyInstance(instance: InstanceConfig) {

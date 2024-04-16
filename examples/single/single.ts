@@ -1,4 +1,4 @@
-import { ServerInstanceConfig } from "../../src/types.ts";
+import type { ServerInstanceConfig } from "../../src/types.ts";
 
 export default {
   role: "server",
