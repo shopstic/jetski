@@ -1,10 +1,9 @@
 import { createCliAction, ExitCode, Type } from "../deps.ts";
-import version from "../version.ts";
 
 export default createCliAction(
   Type.Object({}),
   () => {
-    console.log({ app: version, ...Deno.version });
+    console.log({ app: Deno.env.get("JETSKI_VERSION") ?? "dev", ...Deno.version });
     return Promise.resolve(ExitCode.Zero);
   },
 );

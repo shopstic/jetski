@@ -1,10 +1,16 @@
 name: Build
 
-on: [push]
+on:
+  push:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version"
+        required: true
 
 defaults:
   run:
-    shell: bash
+    shell: nix develop -v -c bash {0}
 
 jobs:
   build:
@@ -23,6 +29,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set version
+        if: github.event.inputs.version
+        run: ./cli.sh set_version "${{ github.event.inputs.version }}"
+
       - name: Check
         run: nix develop -v -c ./cli.sh code_quality
 
@@ -35,3 +45,27 @@ jobs:
         run: |
           nix store sign "${NIX_OUTPUT}" -v -r -k ~/.secrets/nix-cache-private-key
           nix copy -v --to "s3://${NIX_CACHE_BUCKET_NAME}/cache?region=${NIX_CACHE_BUCKET_REGION}&compression=zstd&parallel-compression=true" "${NIX_OUTPUT}"
+  
+  release:
+    name: Release ${{ github.event.inputs.version }}
+    if: github.event.inputs.version
+    needs: [build]
+    runs-on: [self-hosted, nix, general, arm64-linux, small]
+    permissions:
+      contents: write
+      id-token: write    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set version
+        if: github.event.inputs.version
+        run: ./cli.sh set_version "${{ github.event.inputs.version }}"
+
+      - name: Publish to JSR
+        if: github.event.inputs.version
+        run: ./cli.sh jsr_publish
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./cli.sh create_release "${{ github.event.inputs.version }}"

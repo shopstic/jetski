@@ -13,7 +13,6 @@
         let
           pkgs = import nixpkgs { inherit system; };
           hotPotPkgs = hotPot.packages.${system};
-          hotPotLib = hotPot.lib;
           deno = hotPotPkgs.deno_1_42_x;
           vscodeSettings = pkgs.writeTextFile {
             name = "vscode-settings.json";
@@ -47,41 +46,49 @@
               "nix.serverPath" = pkgs.nil + "/bin/nil";
             };
           };
-          jetski = pkgs.callPackage hotPotLib.denoAppBuild
-            {
-              inherit deno;
-              inherit (hotPotPkgs) deno-app-build;
-              name = "jetski";
-              src = builtins.path
-                {
-                  path = ./.;
-                  name = "jetski-src";
-                  filter = with pkgs.lib; (path: /* type */_:
-                    hasInfix "/src" path ||
-                    hasSuffix "/deno.lock" path ||
-                    hasSuffix "/deno.json" path
-                  );
-                };
-              appSrcPath = "./src/app.ts";
-              denoRunFlags = "-A";
-            };
           runtimeInputs = builtins.attrValues
             {
               inherit (pkgs)
                 kubectl
                 ;
             };
+          jetski =
+            let
+              name = "jetski";
+              src = builtins.path
+                {
+                  path = ./.;
+                  name = "${name}-src";
+                  filter = with pkgs.lib; (path: /* type */_:
+                    hasInfix "/src" path ||
+                    hasSuffix "/deno.lock" path
+                  );
+                };
+              deno-cache = pkgs.callPackage hotPot.lib.denoAppCache {
+                inherit name src deno;
+                cacheArgs = "./src/**/*.ts";
+              };
+              built = pkgs.callPackage hotPot.lib.denoAppBuild
+                {
+                  inherit name deno deno-cache src;
+                  inherit (hotPotPkgs) deno-app-build;
+                  appSrcPath = "./src/app.ts";
+                  denoRunFlags = "-A";
+                };
+              denoJson = builtins.fromJSON (builtins.readFile ./deno.json);
+            in
+            pkgs.runCommandLocal "${name}-wrapped"
+              {
+                buildInputs = [ pkgs.makeWrapper ];
+              }
+              ''
+                makeWrapper ${built}/bin/jetski $out/bin/jetski \
+                  --set JETSKI_VERSION "${denoJson.version}" \
+                  --prefix PATH : "${pkgs.lib.makeBinPath runtimeInputs}" \
+                  --set-default JETSKI_ENABLE_STACKTRACE "0"
+              '';
         in
         {
-          defaultPackage = pkgs.runCommandLocal "jetski-wrapped"
-            {
-              buildInputs = [ pkgs.makeWrapper ];
-            }
-            ''
-              makeWrapper ${jetski}/bin/jetski $out/bin/jetski \
-                --prefix PATH : "${pkgs.lib.makeBinPath runtimeInputs}" \
-                --set-default JETSKI_ENABLE_STACKTRACE "0"
-            '';
           devShell = pkgs.mkShellNoCC {
             shellHook = ''
               mkdir -p ./.vscode
@@ -95,9 +102,12 @@
               inherit (pkgs)
                 powershell
                 tmux
+                gh
+                jq
                 ;
             };
           };
+          defaultPackage = jetski;
           packages = {
             inherit jetski;
           };
