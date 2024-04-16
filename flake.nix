@@ -67,12 +67,8 @@
             };
           runtimeInputs = builtins.attrValues
             {
-              inherit deno;
               inherit (pkgs)
                 kubectl
-                ;
-              inherit (hotPotPkgs)
-                typescript-eslint
                 ;
             };
         in
@@ -91,10 +87,16 @@
               mkdir -p ./.vscode
               cat ${vscodeSettings} > ./.vscode/settings.json
             '';
-            buildInputs = runtimeInputs ++ [
-              pkgs.powershell
-              pkgs.tmux
-            ];
+            buildInputs = runtimeInputs ++ builtins.attrValues {
+              inherit deno;
+              inherit (hotPotPkgs)
+                typescript-eslint
+                ;
+              inherit (pkgs)
+                powershell
+                tmux
+                ;
+            };
           };
           packages = {
             inherit jetski;
