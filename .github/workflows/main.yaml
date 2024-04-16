@@ -47,7 +47,7 @@ jobs:
           nix copy -v --to "s3://${NIX_CACHE_BUCKET_NAME}/cache?region=${NIX_CACHE_BUCKET_REGION}&compression=zstd&parallel-compression=true" "${NIX_OUTPUT}"
   
   release:
-    name: Release ${{ github.event.inputs.version }}
+    name: Release
     if: github.event.inputs.version
     needs: [build]
     runs-on: [self-hosted, nix, general, arm64-linux, small]
@@ -57,15 +57,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set version
-        if: github.event.inputs.version
+      - name: Set version to ${{ github.event.inputs.version }}
         run: ./cli.sh set_version "${{ github.event.inputs.version }}"
 
       - name: Publish to JSR
-        if: github.event.inputs.version
         run: ./cli.sh jsr_publish
 
-      - name: Release
+      - name: Release ${{ github.event.inputs.version }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./cli.sh create_release "${{ github.event.inputs.version }}"
