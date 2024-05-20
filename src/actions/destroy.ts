@@ -27,12 +27,12 @@ export async function destroyInstance(instance: InstanceConfig) {
 }
 
 export default createCliAction(
-  Type.Object({
+  {
     config: InstanceConfigPathSchema,
     skipConfirm: Type.Optional(Type.Boolean({
       default: false,
     })),
-  }),
+  },
   async ({ config: configPath, skipConfirm }) => {
     const absoluteConfigPath = resolvePath(configPath);
     const instance = await loadInstanceConfig(absoluteConfigPath);

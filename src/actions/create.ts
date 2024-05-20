@@ -10,7 +10,6 @@ import {
   parseYaml,
   resolvePath,
   stringifyYaml,
-  Type,
 } from "../deps.ts";
 import {
   multipass,
@@ -194,10 +193,10 @@ export async function createInstance(instance: InstanceConfig, signal: AbortSign
 }
 
 export default createCliAction(
-  Type.Object({
+  {
     config: InstanceConfigPathSchema,
-  }),
-  async ({ config: configPath }, _, signal) => {
+  },
+  async ({ config: configPath }, signal) => {
     const absoluteConfigPath = resolvePath(configPath);
     const instance = await loadInstanceConfig(absoluteConfigPath);
 

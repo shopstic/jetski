@@ -1,14 +1,15 @@
-import { createCliAction, ExitCode, gray, resolvePath, Type } from "../deps.ts";
+import { createCliAction, ExitCode, gray, NonEmptyString, resolvePath, Type } from "../deps.ts";
 import { multipassInfo, multipassSshInteractive } from "../multipass.ts";
 import { InstanceConfigPathSchema, InstanceState } from "../types.ts";
 import { getExternalIp, loadInstanceConfig, log } from "../utils.ts";
 
 export default createCliAction(
-  Type.Object({
+  {
     config: InstanceConfigPathSchema,
-  }),
-  async (args, unparsedArgs) => {
-    const absoluteConfigPath = resolvePath(args.config);
+    "--": Type.Array(NonEmptyString()),
+  },
+  async ({ config, "--": cmd }) => {
+    const absoluteConfigPath = resolvePath(config);
     const instance = await loadInstanceConfig(absoluteConfigPath);
     const { name, sshDirectoryPath } = instance;
 
@@ -23,7 +24,7 @@ export default createCliAction(
     log(gray(`Instance IP is '${ip}'`));
 
     const exitCode = await multipassSshInteractive({
-      cmd: unparsedArgs,
+      cmd: cmd,
       sshDirectoryPath,
       ip: getExternalIp(ipv4, instance.externalNetworkCidr),
     });

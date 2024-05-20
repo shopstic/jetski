@@ -1,14 +1,14 @@
-import { createCliAction, ExitCode, resolvePath, Type } from "../deps.ts";
+import { createCliAction, ExitCode, resolvePath } from "../deps.ts";
 import { multipassInfo, multipassPostStart } from "../multipass.ts";
 import { InstanceConfigPathSchema, InstanceState } from "../types.ts";
 import { err, loadInstanceConfig, ok } from "../utils.ts";
 import { updateKubeconfig } from "./create.ts";
 
 export default createCliAction(
-  Type.Object({
+  {
     config: InstanceConfigPathSchema,
-  }),
-  async ({ config: configPath }, _, signal) => {
+  },
+  async ({ config: configPath }, signal) => {
     const absoluteConfigPath = resolvePath(configPath);
     const instance = await loadInstanceConfig(absoluteConfigPath);
 

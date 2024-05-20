@@ -5,13 +5,13 @@ import { createInstance } from "./create.ts";
 import { destroyInstance } from "./destroy.ts";
 
 export default createCliAction(
-  Type.Object({
+  {
     config: InstanceConfigPathSchema,
     skipConfirm: Type.Optional(Type.Boolean({
       default: false,
     })),
-  }),
-  async ({ config: configPath, skipConfirm }, _, signal) => {
+  },
+  async ({ config: configPath, skipConfirm }, signal) => {
     const absoluteConfigPath = resolvePath(configPath);
     const instance = await loadInstanceConfig(absoluteConfigPath);
     const { name } = instance;

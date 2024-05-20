@@ -1,12 +1,12 @@
-import { createCliAction, ExitCode, resolvePath, Type } from "../deps.ts";
+import { createCliAction, ExitCode, resolvePath } from "../deps.ts";
 import { multipassInfo, multipassSuspend, multipassUnroute } from "../multipass.ts";
 import { InstanceConfigPathSchema, InstanceState } from "../types.ts";
 import { loadInstanceConfig, ok } from "../utils.ts";
 
 export default createCliAction(
-  Type.Object({
+  {
     config: InstanceConfigPathSchema,
-  }),
+  },
   async ({ config: configPath }) => {
     const absoluteConfigPath = resolvePath(configPath);
     const instance = await loadInstanceConfig(absoluteConfigPath);
