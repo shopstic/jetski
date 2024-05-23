@@ -15,14 +15,9 @@ auto_fmt() {
   deno fmt
 }
 
-update_cache() {
-  rm -f deno.lock && deno cache --lock=deno.lock "${SCRIPT_DIR}"/src/deps.ts "${SCRIPT_DIR}"/src/app.ts
-}
-
 update_lock() {
   rm -f deno.lock
-  deno cache --reload "${SCRIPT_DIR}"/src/deps.ts "${SCRIPT_DIR}"/src/app.ts
-  deno cache "${SCRIPT_DIR}"/src/deps.ts "${SCRIPT_DIR}"/src/app.ts --lock ./deno.lock --lock-write
+  deno cache  --reload "${SCRIPT_DIR}"/src/deps.ts "${SCRIPT_DIR}"/src/app.ts --lock ./deno.lock --lock-write
 }
 
 run() {
