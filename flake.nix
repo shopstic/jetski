@@ -61,7 +61,8 @@
                   name = "${name}-src";
                   filter = with pkgs.lib; (path: /* type */_:
                     hasInfix "/src" path ||
-                    hasSuffix "/deno.lock" path
+                    hasSuffix "/deno.lock" path ||
+                    hasSuffix "/deno.json" path
                   );
                 };
               deno-cache = pkgs.callPackage hotPot.lib.denoAppCache {
@@ -73,7 +74,18 @@
                   inherit name deno deno-cache src;
                   inherit (hotPotPkgs) deno-app-build;
                   appSrcPath = "./src/app.ts";
-                  denoRunFlags = "-A";
+                  denoRunFlags = ''"''${DENO_RUN_FLAGS[@]}"'';
+                  preExec = ''
+                    DENO_RUN_FLAGS=("-A")
+                    if [ ! -f deno.lock ]; then
+                      DENO_RUN_FLAGS+=("--no-lock")
+                    fi
+                    if [ -f deno.json ]; then
+                      DENO_RUN_FLAGS+=("--config=deno.json")
+                    elif [ -f deno.jsonc ]; then
+                      DENO_RUN_FLAGS+=("--config=deno.jsonc")
+                    fi
+                  '';
                 };
               denoJson = builtins.fromJSON (builtins.readFile ./deno.json);
             in

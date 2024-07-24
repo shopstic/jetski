@@ -1,22 +1,15 @@
-export * from "jsr:@wok/utils@1.3.2/cli";
-export * from "jsr:@wok/utils@1.3.2/exec";
-export * from "jsr:@wok/utils@1.3.2/validation";
+export * from "@wok/utils/cli";
+export * from "@wok/utils/exec";
+export * from "@wok/utils/validation";
 export * from "./deps/typebox.ts";
-export type { ValidationResult } from "jsr:@wok/utils@1.3.2/validation";
-export * from "jsr:@std/fmt@0.224.0/colors";
+export type { ValidationResult } from "@wok/utils/validation";
+export * from "@std/fmt/colors";
 
-export {
-  basename,
-  dirname,
-  extname,
-  fromFileUrl,
-  join as joinPath,
-  resolve as resolvePath,
-} from "jsr:@std/path@0.224.0";
+export { basename, dirname, extname, fromFileUrl, join as joinPath, resolve as resolvePath } from "@std/path";
 
-export { parse as parseYaml, stringify as stringifyYaml } from "jsr:@std/yaml@0.224.0";
-export { exists as fsExists } from "jsr:@std/fs@0.224.0/exists";
-export { ensureFile } from "jsr:@std/fs@0.224.0/ensure-file";
-export { assertExists } from "jsr:@std/assert@0.224.0/assert-exists";
-export { memoizePromise } from "jsr:@wok/utils@1.3.2/async";
-export { delay } from "jsr:@std/async@0.224.0/delay";
+export { parse as parseYaml, stringify as stringifyYaml } from "@std/yaml";
+export { exists as fsExists } from "@std/fs/exists";
+export { ensureFile } from "@std/fs/ensure-file";
+export { assertExists } from "@std/assert/exists";
+export { memoizePromise } from "@wok/utils/async";
+export { delay } from "@std/async/delay";
