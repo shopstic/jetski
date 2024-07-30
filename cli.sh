@@ -11,13 +11,18 @@ code_quality() {
   eslint .
 }
 
+update_deps() {
+  # shellcheck disable=SC2046
+  deno add $(jq -r '.imports | keys[]' < deno.json)
+}
+
 auto_fmt() {
   deno fmt
 }
 
 update_lock() {
   rm -f deno.lock
-  deno cache  --reload "${SCRIPT_DIR}"/src/deps.ts "${SCRIPT_DIR}"/src/app.ts --lock ./deno.lock --lock-write
+  deno cache  --reload "${SCRIPT_DIR}"/src/deps.ts "${SCRIPT_DIR}"/src/app.ts --lock ./deno.lock --frozen=false
 }
 
 run() {
