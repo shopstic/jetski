@@ -25,6 +25,10 @@ update_lock() {
   deno cache  --reload "${SCRIPT_DIR}"/src/deps.ts "${SCRIPT_DIR}"/src/app.ts --lock ./deno.lock --frozen=false
 }
 
+update_deps() {
+  deno run -A jsr:@wok/deup@1.0.3
+}
+
 run() {
   export JETSKI_ENABLE_STACKTRACE=${JETSKI_ENABLE_STACKTRACE:-"0"}
   deno run -A --check "${SCRIPT_DIR}"/src/app.ts "$@"
