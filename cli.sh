@@ -26,7 +26,7 @@ update_lock() {
 }
 
 update_deps() {
-  deno run -A jsr:@wok/deup@1.1.0
+  deno run -A jsr:@wok/deup@1.2.0 update
 }
 
 run() {
