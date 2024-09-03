@@ -11,5 +11,5 @@ export { parse as parseYaml, stringify as stringifyYaml } from "@std/yaml";
 export { exists as fsExists } from "@std/fs/exists";
 export { ensureFile } from "@std/fs/ensure-file";
 export { assertExists } from "@std/assert/exists";
-export { memoizePromise } from "@wok/utils/async";
+export { memoize } from "@wok/utils/memoize";
 export { delay } from "@std/async/delay";

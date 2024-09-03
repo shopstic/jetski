@@ -14,6 +14,7 @@
           pkgs = import nixpkgs { inherit system; };
           hotPotPkgs = hotPot.packages.${system};
           deno = hotPotPkgs.deno;
+          # denort = hotPotPkgs.denort;
           vscodeSettings = pkgs.writeTextFile {
             name = "vscode-settings.json";
             text = builtins.toJSON {
@@ -65,9 +66,11 @@
                     hasSuffix "/deno.json" path
                   );
                 };
-              deno-cache = pkgs.callPackage hotPot.lib.denoAppCache {
-                inherit name src deno;
-                cacheArgs = "./src/**/*.ts";
+              deno-cache = pkgs.callPackage hotPot.lib.denoAppCache2 {
+                inherit deno name src;
+                config-file = ./deno.json;
+                lock-file = ./deno.lock;
+                deno-gen-cache-entry = hotPotPkgs.deno-gen-cache-entry;
               };
               built = pkgs.callPackage hotPot.lib.denoAppBuild
                 {
@@ -122,7 +125,9 @@
           };
           defaultPackage = jetski;
           packages = {
-            inherit jetski;
+            inherit
+              jetski
+              ;
           };
         }
       );

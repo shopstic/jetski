@@ -8,7 +8,7 @@ import {
   ExecAbortedError,
   gray,
   inheritExec,
-  memoizePromise,
+  memoize,
   NonZeroExitError,
   printErrLines,
   printOutLines,
@@ -18,8 +18,8 @@ import type { InstanceConfig, JoinMetadata, ServerInstanceConfig } from "./types
 import { InstanceState, MultipassInfo } from "./types.ts";
 import { err, getExternalIp, log, ok, print } from "./utils.ts";
 
-export const multipassBin = memoizePromise(() => locateBin("multipass"));
-export const sshBin = memoizePromise(() => locateBin("ssh"));
+export const multipassBin = memoize(() => locateBin("multipass"));
+export const sshBin = memoize(() => locateBin("ssh"));
 
 export async function locateBin(name: string): Promise<string> {
   try {
