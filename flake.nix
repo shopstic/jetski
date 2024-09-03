@@ -13,6 +13,7 @@
         let
           pkgs = import nixpkgs { inherit system; };
           hotPotPkgs = hotPot.packages.${system};
+          hotPotLib = hotPot.lib.${system};
           deno = hotPotPkgs.deno;
           # denort = hotPotPkgs.denort;
           vscodeSettings = pkgs.writeTextFile {
@@ -66,15 +67,14 @@
                     hasSuffix "/deno.json" path
                   );
                 };
-              deno-cache = pkgs.callPackage hotPot.lib.denoAppCache2 {
+              deno-cache = pkgs.callPackage hotPotLib.denoAppCache2 {
                 inherit deno name src;
                 config-file = ./deno.json;
                 lock-file = ./deno.lock;
-                deno-gen-cache-entry = hotPotPkgs.deno-gen-cache-entry;
               };
-              built = pkgs.callPackage hotPot.lib.denoAppBuild
+              built = pkgs.callPackage hotPotLib.denoAppBuild
                 {
-                  inherit name deno deno-cache src;
+                  inherit name deno-cache src;
                   inherit (hotPotPkgs) deno-app-build;
                   appSrcPath = "./src/app.ts";
                   denoRunFlags = ''"''${DENO_RUN_FLAGS[@]}"'';
