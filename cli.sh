@@ -11,11 +11,6 @@ code_quality() {
   eslint .
 }
 
-update_deps() {
-  # shellcheck disable=SC2046
-  deno add $(jq -r '.imports | keys[]' < deno.json)
-}
-
 auto_fmt() {
   deno fmt
 }
@@ -26,7 +21,7 @@ update_lock() {
 }
 
 update_deps() {
-  deno run -A jsr:@wok/deup@1.2.0 update
+  deno run -A jsr:@wok/deup@1.3.0 update "$@"
 }
 
 run() {
