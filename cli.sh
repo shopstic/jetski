@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
+shopt -s extglob globstar
+
 SCRIPT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+
+check_all() {
+  deno check ./**/*.ts
+}
 
 code_quality() {
   echo "Checking formatting..."
@@ -21,7 +27,8 @@ update_lock() {
 }
 
 update_deps() {
-  deno run -A jsr:@wok/deup@1.3.0 update "$@"
+  deno run -A jsr:@wok/deup@1.3.1 update "$@"
+  "$0" update_lock
 }
 
 run() {

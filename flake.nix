@@ -67,15 +67,14 @@
                     hasSuffix "/deno.json" path
                   );
                 };
-              deno-cache = pkgs.callPackage hotPotLib.denoAppCache2 {
+              deno-cache-dir = pkgs.callPackage hotPotLib.denoAppCache2 {
                 inherit deno name src;
                 config-file = ./deno.json;
                 lock-file = ./deno.lock;
               };
-              built = pkgs.callPackage hotPotLib.denoAppBuild
+              transpiled = pkgs.callPackage hotPotLib.denoAppTranspile
                 {
-                  inherit name deno-cache src;
-                  inherit (hotPotPkgs) deno-app-build;
+                  inherit name deno-cache-dir src;
                   appSrcPath = "./src/app.ts";
                   denoRunFlags = ''"''${DENO_RUN_FLAGS[@]}"'';
                   preExec = ''
@@ -98,7 +97,7 @@
                 buildInputs = [ pkgs.makeWrapper ];
               }
               ''
-                makeWrapper ${built}/bin/jetski $out/bin/jetski \
+                makeWrapper ${transpiled}/bin/jetski $out/bin/jetski \
                   --set JETSKI_VERSION "${denoJson.version}" \
                   --prefix PATH : "${pkgs.lib.makeBinPath runtimeInputs}" \
                   --set-default JETSKI_ENABLE_STACKTRACE "0"
