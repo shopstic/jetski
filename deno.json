@@ -1,11 +1,16 @@
 {
   "name": "@wok/jetski",
-  "version": "0.0.0",
+  "version": "1.11.2",
   "exports": {
     "./types": "./src/types.ts"
   },
   "publish": {
-    "include": ["./src", "./deno.json", "./README.md", "./LICENSE"]
+    "include": [
+      "./src",
+      "./deno.json",
+      "./README.md",
+      "./LICENSE"
+    ]
   },
   "fmt": {
     "include": [
@@ -27,7 +32,9 @@
       "**/.secrets/*"
     ],
     "rules": {
-      "exclude": ["no-slow-types"]
+      "exclude": [
+        "no-slow-types"
+      ]
     }
   },
   "imports": {
