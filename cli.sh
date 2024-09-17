@@ -11,6 +11,8 @@ check_all() {
 code_quality() {
   echo "Checking formatting..."
   deno fmt --check
+  echo "Checking types..."
+  "$0" check_all
   echo "Linting..."
   deno lint
   echo "Running eslint..."

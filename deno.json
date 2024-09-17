@@ -37,7 +37,7 @@
     "@std/fs": "jsr:@std/fs@^1.0.3",
     "@std/path": "jsr:@std/path@^1.0.6",
     "@std/yaml": "jsr:@std/yaml@^1.0.5",
-    "@wok/typebox": "jsr:@wok/typebox@^0.33.10",
-    "@wok/utils": "jsr:@wok/utils@^2.1.6"
+    "@wok/typebox": "jsr:@wok/typebox@^0.33.13",
+    "@wok/utils": "jsr:@wok/utils@^3.0.0"
   }
 }

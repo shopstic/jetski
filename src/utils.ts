@@ -59,7 +59,7 @@ export async function loadInstanceConfig(
 
   if (!instanceResult.isSuccess) {
     throw new Error(
-      `Instance config is invalid. Reasons:\n${renderValidationErrors(instanceResult.errors)}`,
+      `Instance config is invalid. Reasons:\n${renderValidationErrors([...instanceResult.errors])}`,
     );
   }
 
