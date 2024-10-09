@@ -4,6 +4,7 @@ import { fsExists, gray, inheritExec, joinPath, red, stringifyYaml } from "./dep
 import type { InstanceConfig } from "./types.ts";
 import { AgentInstanceConfigSchema, JoinMetadataSchema, ServerInstanceConfigSchema } from "./types.ts";
 import cloudInitScripts from "./cloud_init_scripts.json" with { type: "json" };
+import { toFileUrl } from "@std/path/to-file-url";
 
 function renderValidationError(error: ValueError) {
   return `  - at path ${JSON.stringify(error.path)}: ${error.message}`;
@@ -36,7 +37,7 @@ export async function loadInstanceConfig(
 
   log(gray(`Importing instance config ${instancePath}`));
 
-  const instanceMod = await import(instancePath);
+  const instanceMod = await import(toFileUrl(instancePath).toString());
 
   if (!instanceMod.default) {
     throw new Error("Instance config module does not have a default export");
