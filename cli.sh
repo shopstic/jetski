@@ -39,7 +39,7 @@ run() {
 }
 
 set_version() {
-  local VERSION=${1:-"dev"}
+  local VERSION=${1:-"0.0.0"}
   local JSR_JSON
   JSR_JSON=$(jq -e --arg VERSION "${VERSION}" '.version=$VERSION' ./deno.json)
   echo "${JSR_JSON}" >./deno.json

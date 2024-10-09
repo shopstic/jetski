@@ -170,7 +170,7 @@ export async function createInstance(instance: InstanceConfig, signal: AbortSign
       },
     });
   } catch (e) {
-    err("Failed launching", e.toString());
+    err("Failed launching", e);
     return ExitCode.One;
   } finally {
     await Deno.remove(tempDir, { recursive: true });

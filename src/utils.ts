@@ -147,8 +147,10 @@ export async function createCloudInitConfig(
 
         return result.value;
       }
-    } catch (e) {
-      throw new Error(`Failed reading join metadata from ${instance.joinMetadataPath}. Reason: ${e.message}`, e);
+    } catch (cause) {
+      throw new Error(`Failed reading join metadata from ${instance.joinMetadataPath}`, {
+        cause,
+      });
     }
   })();
 

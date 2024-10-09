@@ -105,8 +105,10 @@ export async function multipassInfo(
   const output = (() => {
     try {
       return JSON.parse(maybeJson);
-    } catch (e) {
-      throw new Error(`Failed parsing 'multipass info ...' output to JSON due to: ${e.toString()}. Got: ${maybeJson}`);
+    } catch (cause) {
+      throw new Error(`Failed parsing 'multipass info ...' output to JSON. Got: ${maybeJson}`, {
+        cause,
+      });
     }
   })();
 
@@ -380,7 +382,7 @@ export async function multipassPostStart(instance: InstanceConfig, abortSignal: 
       try {
         return (await multipassInfo({ name })).state;
       } catch (e) {
-        err("Failed obtaining instance state, will retry in 1s. Reason:", e.message);
+        err("Failed obtaining instance state, will retry in 1s. Reason:", e);
         await delay(1000, { signal: abortSignal });
       }
     }

@@ -26,12 +26,12 @@ try {
   await program.run(Deno.args);
 } catch (e) {
   if (e instanceof NonZeroExitError) {
-    console.error(bold(red("[Error]")), JSON.stringify(e, null, 2));
+    console.error(bold(red("[Error]")), e);
   } else if (Deno.env.get("JETSKI_ENABLE_STACKTRACE") !== "0") {
-    console.error(bold(red("[Error]")), e.message, JSON.stringify(e, null, 2));
+    console.error(bold(red("[Error]")), e);
     throw e;
   } else {
-    console.error(bold(red("[Error]")), e.message);
+    console.error(bold(red("[Error]")), e);
   }
 
   Deno.exit(1);
