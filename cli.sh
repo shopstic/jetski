@@ -29,7 +29,7 @@ update_lock() {
 }
 
 update_deps() {
-  deno run -A jsr:@wok/deup@1.3.1 update "$@"
+  deno outdated --update "$@"
   "$0" update_lock
 }
 
