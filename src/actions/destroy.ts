@@ -1,4 +1,5 @@
-import { createCliAction, cyan, ExitCode, resolvePath, Type, yellow } from "../deps.ts";
+import { Bool, Opt } from "@wok/schema";
+import { createCliAction, cyan, ExitCode, resolvePath, yellow } from "../deps.ts";
 import { multipass, multipassInfo, multipassK3sKillAll, multipassStop, multipassUnroute } from "../multipass.ts";
 import type { InstanceConfig } from "../types.ts";
 import { InstanceConfigPathSchema, InstanceState } from "../types.ts";
@@ -29,9 +30,7 @@ export async function destroyInstance(instance: InstanceConfig) {
 export default createCliAction(
   {
     config: InstanceConfigPathSchema,
-    skipConfirm: Type.Optional(Type.Boolean({
-      default: false,
-    })),
+    skipConfirm: Opt(Bool(), false),
   },
   async ({ config: configPath, skipConfirm }) => {
     const absoluteConfigPath = resolvePath(configPath);

@@ -1,94 +1,93 @@
-import type { Static } from "./deps/typebox.ts";
-import { FlexObject, NonEmptyString, PosInt, Type } from "./deps/typebox.ts";
+import { Arr, Bool, Enum, Lit, NonEmpStr, Obj, Opt, PartObj, PosInt, Rec, Str, Uni } from "@wok/schema/schema";
 
-export const Cidr = NonEmptyString({
+export const Cidr = NonEmpStr({
   pattern: "^([0-9]{1,3}\.){3}[0-9]{1,3}(\/([0-9]|[1-2][0-9]|3[0-2]))$",
 });
-export const Ipv4 = NonEmptyString({
+export const Ipv4 = NonEmpStr({
   format: "ipv4",
 });
-export const Url = NonEmptyString({ format: "url" });
+export const Url = NonEmpStr({ format: "url" });
 
-export const ServerInstanceConfigSchema = Type.Object({
-  role: Type.Literal("server"),
-  name: NonEmptyString(),
-  contextName: Type.Optional(NonEmptyString()),
-  image: Type.Optional(NonEmptyString()),
+export const ServerInstanceConfigSchema = Obj({
+  role: Lit("server"),
+  name: NonEmpStr(),
+  contextName: Opt(NonEmpStr()),
+  image: Opt(NonEmpStr()),
   cpus: PosInt(),
   memoryGiBs: PosInt(),
   diskGiBs: PosInt(),
-  bridged: Type.Optional(Type.Boolean()),
-  k3sVersion: NonEmptyString(),
-  externalNetworkCidr: Type.Optional(Cidr),
-  datastoreEndpoint: Type.Optional(NonEmptyString()),
+  bridged: Opt(Bool()),
+  k3sVersion: NonEmpStr(),
+  externalNetworkCidr: Opt(Cidr),
+  datastoreEndpoint: Opt(NonEmpStr()),
   clusterCidr: Cidr,
   serviceCidr: Cidr,
   clusterDnsIp: Ipv4,
-  clusterDomain: NonEmptyString({ format: "hostname" }),
-  kubelet: Type.Optional(Type.Object({
-    maxPods: Type.Optional(PosInt()),
+  clusterDomain: NonEmpStr({ format: "hostname" }),
+  kubelet: Opt(Obj({
+    maxPods: Opt(PosInt()),
   })),
-  disableComponents: Type.Optional(Type.Object({
-    coredns: Type.Optional(Type.Boolean()),
-    servicelb: Type.Optional(Type.Boolean()),
-    traefik: Type.Optional(Type.Boolean()),
-    localStorage: Type.Optional(Type.Boolean()),
-    metricsServer: Type.Optional(Type.Boolean()),
+  disableComponents: Opt(Obj({
+    coredns: Opt(Bool()),
+    servicelb: Opt(Bool()),
+    traefik: Opt(Bool()),
+    localStorage: Opt(Bool()),
+    metricsServer: Opt(Bool()),
   })),
-  nodeLabels: Type.Optional(Type.Record(NonEmptyString(), NonEmptyString())),
-  nodeTaints: Type.Optional(Type.Record(NonEmptyString(), NonEmptyString())),
-  sshDirectoryPath: NonEmptyString(),
-  joinMetadataPath: NonEmptyString(),
-  userName: Type.Optional(NonEmptyString()),
-  userPassword: Type.Optional(NonEmptyString()),
-  clusterInit: Type.Optional(Type.Boolean()),
-  keepalived: Type.Optional(Type.Object({
-    state: Type.Union([Type.Literal("MASTER"), Type.Literal("BACKUP")]),
+  nodeLabels: Opt(Rec(NonEmpStr(), NonEmpStr())),
+  nodeTaints: Opt(Rec(NonEmpStr(), NonEmpStr())),
+  sshDirectoryPath: NonEmpStr(),
+  joinMetadataPath: NonEmpStr(),
+  userName: Opt(NonEmpStr()),
+  userPassword: Opt(NonEmpStr()),
+  clusterInit: Opt(Bool()),
+  keepalived: Opt(Obj({
+    state: Uni([Lit("MASTER"), Lit("BACKUP")]),
     virtualRouterId: PosInt(),
     virtualIp: Ipv4,
     priority: PosInt(),
-    password: NonEmptyString(),
+    password: NonEmpStr(),
   })),
 });
 
-export const AgentInstanceConfigSchema = Type.Object({
-  role: Type.Literal("agent"),
-  name: NonEmptyString(),
-  image: Type.Optional(NonEmptyString()),
+export const AgentInstanceConfigSchema = Obj({
+  role: Lit("agent"),
+  name: NonEmpStr(),
+  image: Opt(NonEmpStr()),
   cpus: PosInt(),
   memoryGiBs: PosInt(),
   diskGiBs: PosInt(),
-  bridged: Type.Optional(Type.Boolean()),
-  clusterDomain: NonEmptyString({ format: "hostname" }),
-  kubelet: Type.Optional(Type.Object({
+  bridged: Opt(Bool()),
+  clusterDomain: NonEmpStr({ format: "hostname" }),
+  kubelet: Opt(Obj({
     maxPods: PosInt(),
   })),
-  externalNetworkCidr: Type.Optional(Cidr),
-  k3sVersion: NonEmptyString(),
-  nodeLabels: Type.Optional(Type.Record(NonEmptyString(), NonEmptyString())),
-  nodeTaints: Type.Optional(Type.Record(NonEmptyString(), NonEmptyString())),
-  sshDirectoryPath: NonEmptyString(),
-  joinMetadataPath: NonEmptyString(),
-  userName: Type.Optional(NonEmptyString()),
-  userPassword: Type.Optional(NonEmptyString()),
+  externalNetworkCidr: Opt(Cidr),
+  k3sVersion: NonEmpStr(),
+  nodeLabels: Opt(Rec(NonEmpStr(), NonEmpStr())),
+  nodeTaints: Opt(Rec(NonEmpStr(), NonEmpStr())),
+  sshDirectoryPath: NonEmpStr(),
+  joinMetadataPath: NonEmpStr(),
+  userName: Opt(NonEmpStr()),
+  userPassword: Opt(NonEmpStr()),
 });
 
-export const ClusterInstanceConfigSchema = Type.Object({
-  servers: Type.Array(ServerInstanceConfigSchema),
-  agents: Type.Array(AgentInstanceConfigSchema),
+export const ClusterInstanceConfigSchema = Obj({
+  servers: Arr(ServerInstanceConfigSchema),
+  agents: Arr(AgentInstanceConfigSchema),
 });
 
-export const InstanceConfigSchema = Type.Union([
+export const InstanceConfigSchema = Uni([
   ServerInstanceConfigSchema,
   AgentInstanceConfigSchema,
 ]);
 
-export const JoinMetadataSchema = Type.Object({
-  url: NonEmptyString({ format: "uri" }),
-  token: NonEmptyString(),
+export const JoinMetadataSchema = Obj({
+  url: NonEmpStr({ format: "uri" }),
+  token: NonEmpStr(),
 });
 
-export type JoinMetadata = Static<typeof JoinMetadataSchema>;
+export type JoinMetadata = typeof JoinMetadataSchema.infer;
 
 export enum InstanceState {
   Starting = "Starting",
@@ -98,21 +97,21 @@ export enum InstanceState {
   Unknown = "Unknown",
 }
 
-export const MultipassInfo = FlexObject({
-  info: Type.Record(
-    NonEmptyString(),
-    FlexObject({
-      ipv4: Type.Array(Ipv4),
-      state: Type.Enum(InstanceState),
+export const MultipassInfo = PartObj({
+  info: Rec(
+    NonEmpStr(),
+    PartObj({
+      ipv4: Arr(Ipv4),
+      state: Enum(Object.values(InstanceState)),
     }),
   ),
 });
 
-export type ServerInstanceConfig = Static<typeof ServerInstanceConfigSchema>;
-export type AgentInstanceConfig = Static<typeof AgentInstanceConfigSchema>;
-export type InstanceConfig = Static<typeof InstanceConfigSchema>;
+export type ServerInstanceConfig = typeof ServerInstanceConfigSchema.infer;
+export type AgentInstanceConfig = typeof AgentInstanceConfigSchema.infer;
+export type InstanceConfig = typeof InstanceConfigSchema.infer;
 
-export const InstanceConfigPathSchema = Type.String({
+export const InstanceConfigPathSchema = Str({
   minLength: 1,
   description: "Path to the instance config file. It should be an ES module with a default export.",
 });

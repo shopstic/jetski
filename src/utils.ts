@@ -1,5 +1,13 @@
-import type { ValueError } from "./deps.ts";
-import { dirname, green, NonZeroExitError, printErrLines, printOutLines, resolvePath, validate } from "./deps.ts";
+import {
+  dirname,
+  green,
+  NonZeroExitError,
+  printErrLines,
+  printOutLines,
+  resolvePath,
+  typedParse,
+  type ValueError,
+} from "./deps.ts";
 import { fsExists, gray, inheritExec, joinPath, red, stringifyYaml } from "./deps.ts";
 import type { InstanceConfig } from "./types.ts";
 import { AgentInstanceConfigSchema, JoinMetadataSchema, ServerInstanceConfigSchema } from "./types.ts";
@@ -55,8 +63,9 @@ export async function loadInstanceConfig(
     );
   }
 
-  const schema = (instanceConfig.role === "server") ? ServerInstanceConfigSchema : AgentInstanceConfigSchema;
-  const instanceResult = validate(schema, instanceMod.default);
+  const instanceResult = (instanceConfig.role === "server")
+    ? typedParse(ServerInstanceConfigSchema, instanceMod.default)
+    : typedParse(AgentInstanceConfigSchema, instanceMod.default);
 
   if (!instanceResult.isSuccess) {
     throw new Error(
@@ -138,7 +147,7 @@ export async function createCloudInitConfig(
     try {
       if (instance.role === "agent" || (instance.role === "server" && !instance.clusterInit)) {
         const content = JSON.parse(await Deno.readTextFile(instance.joinMetadataPath));
-        const result = validate(JoinMetadataSchema, content);
+        const result = typedParse(JoinMetadataSchema, content);
 
         if (!result.isSuccess) {
           throw new Error(

@@ -12,7 +12,7 @@ import {
   NonZeroExitError,
   printErrLines,
   printOutLines,
-  validate,
+  typedParse,
 } from "./deps.ts";
 import type { InstanceConfig, JoinMetadata, ServerInstanceConfig } from "./types.ts";
 import { InstanceState, MultipassInfo } from "./types.ts";
@@ -112,7 +112,7 @@ export async function multipassInfo(
     }
   })();
 
-  const result = validate(MultipassInfo, output);
+  const result = typedParse(MultipassInfo, output);
 
   if (!result.isSuccess) {
     throw new Error(

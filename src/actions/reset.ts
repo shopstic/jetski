@@ -1,4 +1,5 @@
-import { createCliAction, ExitCode, resolvePath, Type, yellow } from "../deps.ts";
+import { Bool, Opt } from "@wok/schema";
+import { createCliAction, ExitCode, resolvePath, yellow } from "../deps.ts";
 import { InstanceConfigPathSchema } from "../types.ts";
 import { loadInstanceConfig } from "../utils.ts";
 import { createInstance } from "./create.ts";
@@ -7,9 +8,7 @@ import { destroyInstance } from "./destroy.ts";
 export default createCliAction(
   {
     config: InstanceConfigPathSchema,
-    skipConfirm: Type.Optional(Type.Boolean({
-      default: false,
-    })),
+    skipConfirm: Opt(Bool(), false),
   },
   async ({ config: configPath, skipConfirm }, signal) => {
     const absoluteConfigPath = resolvePath(configPath);

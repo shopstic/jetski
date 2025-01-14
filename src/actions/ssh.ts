@@ -1,4 +1,5 @@
-import { createCliAction, ExitCode, gray, NonEmptyString, resolvePath, Type } from "../deps.ts";
+import { Arr, NonEmpStr } from "@wok/schema/schema";
+import { createCliAction, ExitCode, gray, resolvePath } from "../deps.ts";
 import { multipassInfo, multipassSshInteractive } from "../multipass.ts";
 import { InstanceConfigPathSchema, InstanceState } from "../types.ts";
 import { getExternalIp, loadInstanceConfig, log } from "../utils.ts";
@@ -6,7 +7,7 @@ import { getExternalIp, loadInstanceConfig, log } from "../utils.ts";
 export default createCliAction(
   {
     config: InstanceConfigPathSchema,
-    "--": Type.Array(NonEmptyString()),
+    "--": Arr(NonEmpStr()),
   },
   async ({ config, "--": cmd }) => {
     const absoluteConfigPath = resolvePath(config);

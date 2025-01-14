@@ -1,7 +1,6 @@
 export * from "@wok/utils/cli";
 export * from "@wok/utils/exec";
 export * from "@wok/utils/validation";
-export * from "./deps/typebox.ts";
 export type { ValidationResult } from "@wok/utils/validation";
 export * from "@std/fmt/colors";
 
@@ -13,3 +12,4 @@ export { ensureFile } from "@std/fs/ensure-file";
 export { assertExists } from "@std/assert/exists";
 export { memoize } from "@wok/utils/memoize";
 export { delay } from "@std/async/delay";
+export * from "@wok/schema";
