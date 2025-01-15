@@ -5,7 +5,7 @@ import {
   printErrLines,
   printOutLines,
   resolvePath,
-  typedParse,
+  validate,
   type ValueError,
 } from "./deps.ts";
 import { fsExists, gray, inheritExec, joinPath, red, stringifyYaml } from "./deps.ts";
@@ -64,8 +64,8 @@ export async function loadInstanceConfig(
   }
 
   const instanceResult = (instanceConfig.role === "server")
-    ? typedParse(ServerInstanceConfigSchema, instanceMod.default)
-    : typedParse(AgentInstanceConfigSchema, instanceMod.default);
+    ? validate(ServerInstanceConfigSchema, instanceMod.default)
+    : validate(AgentInstanceConfigSchema, instanceMod.default);
 
   if (!instanceResult.isSuccess) {
     throw new Error(
@@ -147,7 +147,7 @@ export async function createCloudInitConfig(
     try {
       if (instance.role === "agent" || (instance.role === "server" && !instance.clusterInit)) {
         const content = JSON.parse(await Deno.readTextFile(instance.joinMetadataPath));
-        const result = typedParse(JoinMetadataSchema, content);
+        const result = validate(JoinMetadataSchema, content);
 
         if (!result.isSuccess) {
           throw new Error(

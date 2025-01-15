@@ -38,7 +38,7 @@
     "@std/fs": "jsr:@std/fs@^1.0.9",
     "@std/path": "jsr:@std/path@^1.0.8",
     "@std/yaml": "jsr:@std/yaml@^1.0.5",
-    "@wok/schema": "jsr:@wok/schema@^2.0.1",
-    "@wok/utils": "jsr:@wok/utils@^4.0.1"
+    "@wok/schema": "jsr:@wok/schema@^2.1.0",
+    "@wok/utils": "jsr:@wok/utils@^4.1.0"
   }
 }

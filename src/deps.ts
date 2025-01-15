@@ -1,7 +1,6 @@
 export * from "@wok/utils/cli";
 export * from "@wok/utils/exec";
-export * from "@wok/utils/validation";
-export type { ValidationResult } from "@wok/utils/validation";
+export * from "@wok/schema/validation";
 export * from "@std/fmt/colors";
 
 export { basename, dirname, extname, fromFileUrl, join as joinPath, resolve as resolvePath } from "@std/path";
