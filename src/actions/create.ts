@@ -60,12 +60,13 @@ export async function updateKubeconfig(
   await Deno.writeTextFile(tempKubeConfigFile, stringifyYaml(kubeconfig));
 
   const kubeDir = joinPath(Deno.env.get("HOME") ?? "", ".kube");
+  const kubeBackupDir = joinPath(kubeDir, "backup");
   const kubeConfigFile = joinPath(kubeDir, "config");
 
-  await inheritExec({ cmd: ["mkdir", "-p", kubeDir] });
+  await inheritExec({ cmd: ["mkdir", "-p", kubeBackupDir] });
 
   if (await fsExists(kubeConfigFile)) {
-    const backupKubeConfigFile = joinPath(kubeDir, `config-${new Date().toISOString()}`);
+    const backupKubeConfigFile = joinPath(kubeBackupDir, `config-${new Date().toISOString()}`);
     log("Backing up existing kubeconfig to", cyan(backupKubeConfigFile));
     await Deno.copyFile(kubeConfigFile, backupKubeConfigFile);
   }

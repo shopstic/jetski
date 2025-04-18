@@ -107,6 +107,7 @@ EOF
 
 systemctl daemon-reload
 systemctl restart snap.multipass.multipassd.service
+apt install -y socat
 systemctl enable --now multipassd-proxy.service
 
 sleep 5
