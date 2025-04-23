@@ -14,7 +14,7 @@
     "jsr:@wok/case@^1.0.2": "1.0.2",
     "jsr:@wok/schema@3": "3.0.0",
     "jsr:@wok/typebox@2": "2.0.0",
-    "jsr:@wok/utils@^5.2.3": "5.2.3",
+    "jsr:@wok/utils@^5.2.4": "5.2.4",
     "npm:@sinclair/typebox@~0.34.28": "0.34.33",
     "npm:type-fest@^4.37.0": "4.40.0",
     "npm:type-fest@^4.39.1": "4.40.0"
@@ -72,8 +72,8 @@
         "npm:@sinclair/typebox"
       ]
     },
-    "@wok/utils@5.2.3": {
-      "integrity": "14eee02f005da613b25f8642749a244a26af293a492fe327a219f21100cb7869",
+    "@wok/utils@5.2.4": {
+      "integrity": "110339864ca8ef47a7baa4014e6033010d277348de52936498445253b8398c57",
       "dependencies": [
         "jsr:@std/assert",
         "jsr:@std/cli",
@@ -105,7 +105,7 @@
       "jsr:@std/path@^1.0.8",
       "jsr:@std/yaml@^1.0.5",
       "jsr:@wok/schema@3",
-      "jsr:@wok/utils@^5.2.3"
+      "jsr:@wok/utils@^5.2.4"
     ]
   }
 }
